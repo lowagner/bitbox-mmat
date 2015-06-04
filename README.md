@@ -2,7 +2,8 @@
 
 A memorization game for the bitbox console, a low-power retro-modern open-hardware 
 gaming platform, based on a Cortex M4 chip (STM32F407 specfically, with a clockrate
-of 168MHz and 192KB of RAM) and absolutely no GPU.
+of 168MHz and 192KB of RAM) and absolutely no GPU.  I haven't tested this code
+to see if it even runs on one, but you can play bitbox-mmat on a host computer.
 
 More info about the bitbox console here:
     http://bitboxconsole.blogspot.com/
@@ -23,7 +24,7 @@ create the bitbox executable and the emulated version for your host platform,
 `mmat_emu`.
 
 
-# Helpful links:
+## Helpful links
 
 bitbox on Github:
     https://github.com/makapuf/bitbox
@@ -33,4 +34,12 @@ bitbox blog:
 
 bitbox Google group:
     https://groups.google.com/forum/#!forum/bitbox-console
-   
+
+
+## Attribution / With thanks to
+
+I used the bitbox-polar game as a template:
+    https://github.com/makapuf/bitbox-polar 
+
+The song and sprites are my own, and licensed under 
+the same GPL license found in this directory.
