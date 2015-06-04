@@ -1,11 +1,3 @@
-#ifdef EMULATOR
-#define EMU(X) X
-#define EMUP(P) printf(P)
-#include <stdio.h>
-#else
-#define EMU(X)
-#define EMUP(X)
-#endif
 #include <bitbox.h>
 #include <blitter.h>
 #include <math.h> // sqrtf
@@ -246,7 +238,7 @@ void score_layout()
             correct += 1;
     }
     uint8_t N = (nblocks_x*nblocks_y);
-    EMU(printf("player got %d correct out of %d\n", correct, N);)
+    message("player got %d correct out of %d\n", correct, N);
     score += (LUINT)(1.0*correct/N * next_best_score);
     int j = 7;
     int i = SCREEN_X/2-4;
@@ -351,7 +343,7 @@ void make_board_easier()
         {
             // just give up, we have a very small board
             blocks_not_prepped = 0;
-            EMUP("whatever, get over it\n");
+            message("whatever, get over it\n");
             return;
         }
         else
@@ -427,7 +419,7 @@ void prep_next_blocks()
     {
       case (BLOCKS_MAKE_NEXT):
       {
-        EMUP("prepping next blocks\n");
+        message("prepping next blocks\n");
         // make our next memorization
         srand( vga_frame ); // seed the random number generator
         uint8_t colstarter = rand()%4;
@@ -447,12 +439,12 @@ void prep_next_blocks()
                 max_bucket = colorbucket[i];
         }
         max_incorrect = 2*(N - max_bucket);
-        EMU(printf("max incorrect you can get in this one is %d\n",max_incorrect);)
+        message("max incorrect you can get in this one is %d\n",max_incorrect);
         break;
       }
       case (BLOCKS_CHECK_NEXT):
       {
-        EMUP("checking next blocks\n");
+        message("checking next blocks\n");
         // check whether "next_blocks" is difficult enough (and not too difficult)
         // first check color distribution:
         next_best_score = 1;
@@ -464,7 +456,7 @@ void prep_next_blocks()
         if (next_best_score == 0)
         {
             // very horrible design.  somehow had all one color
-            EMUP("bad blocks\n");
+            message("bad blocks\n");
             blocks_not_prepped = BLOCKS_MAKE_NEXT;
             // make it likely that won't happen again:
             if (N == 1)
@@ -486,7 +478,7 @@ void prep_next_blocks()
       case (BLOCKS_CHECK_NEXT2):
       {
         // things look good so far.  check for corner cases
-        EMU(printf("next base score is %d\n",next_best_score);)
+        message("next base score is %lu\n",next_best_score);
         if (next_nblocks_y == 1)
         {
             for (uint8_t i=1; i<next_nblocks_x; i++)
@@ -516,7 +508,6 @@ void prep_next_blocks()
                 if (next_blocks[1][i] == next_blocks[0][i])
                     next_best_score -= 2;
             }
-            //EMU(printf("next adjusted actual score is %d",next_best_score);)
         }
         else if (next_nblocks_x == 2)
         {
@@ -560,16 +551,16 @@ void prep_next_blocks()
                 }
             }
         }
-        EMU(printf("final refined score is %d\n",next_best_score);)
+        message("final refined score is %lu\n",next_best_score);
         if (next_best_score < score/6)
         {
-            EMUP("oops, too easy\n");
+            message("oops, too easy\n");
             make_board_harder();
             break;
         }
         else if (next_best_score > (score+16))
         {
-            EMUP("oops, too hard\n");
+            message("oops, too hard\n");
             make_board_easier();
             break;
         }
@@ -579,7 +570,7 @@ void prep_next_blocks()
       }
       case (BLOCKS_MAKE_JUMBLE):
       {
-        EMUP("making the jumble\n");
+        message("making the jumble\n");
         // create a jumble of the current blocks
         uint8_t index = 0;
         uint8_t N = next_nblocks_x * next_nblocks_y;
@@ -600,7 +591,7 @@ void prep_next_blocks()
       }
       case (BLOCKS_CHECK_JUMBLE):
       {
-        EMUP("checking the jumble\n");
+        message("checking the jumble\n");
         // check whether jumble is different enough
         int8_t incorrect = 0;
         for (uint8_t j=0; j<nblocks_y; j++)
@@ -624,7 +615,7 @@ void prep_next_blocks()
 
 void enter_level(int l)
 {
-    EMU(printf(" level = %d\n", l);)
+    message(" level = %d\n", l);
 
     level = l;
     if (level>=REAL_LEVEL) 
@@ -715,7 +706,12 @@ void enter_level(int l)
         //selection.sprite->x = -16;
         pause = 30;
     }
+
     delayed_level = 0;
+
+    // remove start button presses here (doube-assurance I suppose):
+    if GAMEPAD_PRESSED(0, start)
+        UNPRESS(0, start);
 }
 
 void game_init( void ) 
@@ -738,9 +734,9 @@ void game_frame( void ) {
     if (pause)
     {
         pause--;
-        if (GAMEPAD_PRESSED(0,start)) 
+        if (GAMEPAD_PRESSED(0,start) && pause > 5) 
         {
-            pause = 0;
+            pause = 5;
             UNPRESS(0, start);
         }
         if (!pause)
