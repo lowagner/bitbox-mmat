@@ -52,4 +52,7 @@ I used the bitbox-polar game as a template:
 https://github.com/makapuf/bitbox-polar 
 
 The song and sprites are my own, and licensed under 
-the same GPL license found in this directory.
+the same GPL license found in this directory.  I used
+this chiptune tracker to create the song:
+
+https://github.com/lowagner/bitbox-chiptracker
