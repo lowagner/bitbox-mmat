@@ -739,10 +739,6 @@ void game_init( void )
 
 void read_presses()
 {
-    // get previous state of buttons
-    for (uint8_t i=0; i<2; i++)
-        prev_gamepad_buttons[i] = gamepad_buttons[i];
-
     // get current state
     kbd_emulate_gamepad();
 
@@ -754,6 +750,10 @@ void read_presses()
         // but only add in _new_ presses to my gamepad buttons
         my_gamepad_buttons[i] |= gamepad_buttons[i] & (~prev_gamepad_buttons[i]);
     }
+    
+    // get previous state of buttons
+    for (uint8_t i=0; i<2; i++)
+        prev_gamepad_buttons[i] = gamepad_buttons[i];
 }
 
 void game_frame( void ) {
