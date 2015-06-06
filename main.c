@@ -558,7 +558,7 @@ void prep_next_blocks()
             make_board_harder();
             break;
         }
-        else if (next_best_score > (score+16))
+        else if (next_best_score > (score/2+16))
         {
             message("oops, too hard\n");
             make_board_easier();
