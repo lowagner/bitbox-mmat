@@ -9,11 +9,16 @@
 
 #include <stdlib.h> // srand rand
 
-#define UINT unsigned int
-#define LUINT unsigned long long int
+#define UNPRESS(id, key) my_gamepad_buttons[id] -= gamepad_##key
+#define PRESSED(id, key) my_gamepad_buttons[id] & gamepad_##key
+#define PRESS(id, key) my_gamepad_buttons[id] |= gamepad_##key
+#define PREV_PRESSED(id, key) prev_gamepad_buttons[id] & gamepad_##key
+
 #define SCREEN_X 40
 #define SCREEN_Y 30
-#define UNPRESS(id, key) gamepad_buttons[id] -= gamepad_##key
+
+#define UINT unsigned int
+#define LUINT unsigned long long int
 
 uint8_t vram[SCREEN_Y][SCREEN_X];
 extern char build_sprite_spr[];
@@ -41,6 +46,9 @@ uint8_t blocks_not_prepped; // ready for next layout or not
 uint8_t next_ncol;
 uint8_t colorbucket[4];
 uint8_t max_incorrect; // whether there can be more than one distinguishable switch possible
+uint16_t my_gamepad_buttons[2];
+uint16_t prev_gamepad_buttons[2];
+
 
 // constants
 // ----
@@ -66,7 +74,7 @@ uint8_t max_incorrect; // whether there can be more than one distinguishable swi
 #define BLOCKS_MAKE_JUMBLE 2
 #define BLOCKS_CHECK_JUMBLE 4
 
-const unsigned int gamepad_dpad = 15 << 8;
+const int16_t gamepad_dpad = 15 << 8;
 
 // constant arrays
 // ----
@@ -615,6 +623,7 @@ void prep_next_blocks()
 
 void enter_level(int l)
 {
+
     message(" level = %d\n", l);
 
     level = l;
@@ -708,16 +717,17 @@ void enter_level(int l)
     }
 
     delayed_level = 0;
-
-    // remove start button presses here (doube-assurance I suppose):
-    if GAMEPAD_PRESSED(0, start)
-        UNPRESS(0, start);
 }
 
 void game_init( void ) 
 {
     high_score = 0;
-
+    // reset buttons to zero
+    for (uint8_t i=0; i<2; ++i)
+        my_gamepad_buttons[i] = 0;
+    for (uint8_t i=0; i<2; ++i)
+        prev_gamepad_buttons[i] = 0;
+    
     blitter_init(); // screen_x was 64 below
     bg = tilemap_new(tmap_tset,0,0,TMAP_HEADER(SCREEN_X,SCREEN_Y,TSET_16, TMAP_U8), vram); 
     cursor.sprite = sprite_new(build_sprite_spr,0,0,0);
@@ -727,14 +737,35 @@ void game_init( void )
     ply_init(SONGLEN,songdata);
 }
 
+void read_presses()
+{
+    // get previous state of buttons
+    for (uint8_t i=0; i<2; i++)
+        prev_gamepad_buttons[i] = gamepad_buttons[i];
+
+    // get current state
+    kbd_emulate_gamepad();
+
+    // update my state using only new presses:
+    for (uint8_t i=0; i<2; ++i)
+    {
+        // only allow button on if it's on:
+        my_gamepad_buttons[i] &= gamepad_buttons[i];
+        // but only add in _new_ presses to my gamepad buttons
+        my_gamepad_buttons[i] |= gamepad_buttons[i] & (~prev_gamepad_buttons[i]);
+    }
+}
+
 void game_frame( void ) {
 
     ply_update();
 
+    read_presses();
+
     if (pause)
     {
         pause--;
-        if (GAMEPAD_PRESSED(0,start) && pause > 5) 
+        if (PRESSED(0,start) && pause > 5) 
         {
             pause = 5;
             UNPRESS(0, start);
@@ -744,8 +775,6 @@ void game_frame( void ) {
                 enter_level(delayed_level+1);
         return;
     }
-
-    kbd_emulate_gamepad();
 
     if (blocks_not_prepped)
         prep_next_blocks();
@@ -797,13 +826,14 @@ void game_frame( void ) {
         }
 
         // just wait for keypress - wait a bit ?
-        if (GAMEPAD_PRESSED(0,start))
+        if (PRESSED(0,start))
         {
             UNPRESS(0, start);
             enter_level(level+1);
         }
-        else if (GAMEPAD_PRESSED(0,A)) 
+        else if (PRESSED(0,A)) 
         {
+            UNPRESS(0, A);
             enter_level(level+1);
         }
     } 
@@ -811,9 +841,9 @@ void game_frame( void ) {
     {
         // show time since beginning
         int t=time_remaining - (vga_frame-start_time)/60;
-        if (t <= 0 || GAMEPAD_PRESSED(0, start))
+        if (t <= 0 || PRESSED(0, start))
         {
-            if (GAMEPAD_PRESSED(0, start))
+            if (PRESSED(0, start))
                 UNPRESS(0, start);
             if (memorization)
             {
@@ -823,10 +853,6 @@ void game_frame( void ) {
             else
             {
                 score_layout();
-//                    enter_level(level+1);
-//                else
-//                    enter_level(0); // maybe enter -1 level for lose level
-//                return;
                 return;
             }
         }
@@ -845,43 +871,43 @@ void game_frame( void ) {
         if (!memorization)
         {
             // input handling
-            if (GAMEPAD_PRESSED(0,B)) 
+            if (PRESSED(0,B)) 
                 cursor.sprite->fr=0; 
             else
                 cursor.sprite->fr=1; 
-            if (gamepad_buttons[0] & gamepad_dpad)
+            if (PRESSED(0, dpad))
             {
-                if (GAMEPAD_PRESSED(0,up))
+                if (PRESSED(0,up))
                 {
                     if (cursor.dj > 0)
                     {
                         cursor.dj -= 1;
                         cursor.sprite->y -= 32;
-                        if (GAMEPAD_PRESSED(0, B))
+                        if (PRESSED(0, B))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj+1, cursor.di);
                             // don't unpress here, because we want player to be able
                             // to chain moving things around
                     }
                     UNPRESS(0, up);
                 }
-                else if (GAMEPAD_PRESSED(0, down))
+                else if (PRESSED(0, down))
                 {
                     if (cursor.dj < nblocks_y-1)
                     {
                         cursor.dj += 1;
                         cursor.sprite->y += 32;
-                        if (GAMEPAD_PRESSED(0, B))
+                        if (PRESSED(0, B))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj-1, cursor.di);
                     }
                     UNPRESS(0, down);
                 }
-                else if (GAMEPAD_PRESSED(0, right))
+                else if (PRESSED(0, right))
                 {
                     if (cursor.di < nblocks_x-1)
                     {
                         cursor.di += 1;
                         cursor.sprite->x += 32;
-                        if (GAMEPAD_PRESSED(0, B))
+                        if (PRESSED(0, B))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di-1);
                     }
                     UNPRESS(0, right);
@@ -892,7 +918,7 @@ void game_frame( void ) {
                     {
                         cursor.di -= 1;
                         cursor.sprite->x -= 32;
-                        if (GAMEPAD_PRESSED(0, B))
+                        if (PRESSED(0, B))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di+1);
                     }
                     UNPRESS(0, left);
@@ -900,4 +926,5 @@ void game_frame( void ) {
             }
         }
     }
+
 }
