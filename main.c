@@ -762,6 +762,9 @@ void game_frame( void ) {
 
     read_presses();
 
+    if (blocks_not_prepped)
+        prep_next_blocks();
+
     if (pause)
     {
         pause--;
@@ -775,9 +778,6 @@ void game_frame( void ) {
                 enter_level(delayed_level+1);
         return;
     }
-
-    if (blocks_not_prepped)
-        prep_next_blocks();
 
     if (level < REAL_LEVEL) 
     {  // men
