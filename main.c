@@ -75,6 +75,7 @@ uint16_t prev_gamepad_buttons[2];
 #define BLOCKS_CHECK_JUMBLE 4
 
 const int16_t gamepad_dpad = 15 << 8;
+const int16_t gamepad_any = 63;
 
 // constant arrays
 // ----
@@ -828,12 +829,12 @@ void game_frame( void ) {
         // just wait for keypress - wait a bit ?
         if (PRESSED(0,start))
         {
-            UNPRESS(0, start);
+            my_gamepad_buttons[0] = 0;
             enter_level(level+1);
         }
-        else if (PRESSED(0,A)) 
+        else if (PRESSED(0,any)) 
         {
-            UNPRESS(0, A);
+            my_gamepad_buttons[0] = 0;
             enter_level(level+1);
         }
     } 
@@ -871,7 +872,7 @@ void game_frame( void ) {
         if (!memorization)
         {
             // input handling
-            if (PRESSED(0,B)) 
+            if (PRESSED(0,any)) 
                 cursor.sprite->fr=0; 
             else
                 cursor.sprite->fr=1; 
@@ -883,7 +884,7 @@ void game_frame( void ) {
                     {
                         cursor.dj -= 1;
                         cursor.sprite->y -= 32;
-                        if (PRESSED(0, B))
+                        if (PRESSED(0, any))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj+1, cursor.di);
                             // don't unpress here, because we want player to be able
                             // to chain moving things around
@@ -896,7 +897,7 @@ void game_frame( void ) {
                     {
                         cursor.dj += 1;
                         cursor.sprite->y += 32;
-                        if (PRESSED(0, B))
+                        if (PRESSED(0, any))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj-1, cursor.di);
                     }
                     UNPRESS(0, down);
@@ -907,7 +908,7 @@ void game_frame( void ) {
                     {
                         cursor.di += 1;
                         cursor.sprite->x += 32;
-                        if (PRESSED(0, B))
+                        if (PRESSED(0, any))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di-1);
                     }
                     UNPRESS(0, right);
@@ -918,7 +919,7 @@ void game_frame( void ) {
                     {
                         cursor.di -= 1;
                         cursor.sprite->x -= 32;
-                        if (PRESSED(0, B))
+                        if (PRESSED(0, any))
                             swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di+1);
                     }
                     UNPRESS(0, left);
