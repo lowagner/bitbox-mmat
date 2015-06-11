@@ -4,7 +4,7 @@ NO_SDCARD=1
 
 NAME=mmat
 
-GAME_C_FILES = main.c song.c build/tmap.c
+GAME_C_FILES = main.c song.c ticktock.c build/tmap.c
 GAME_BINARY_FILES = build/sprite.spr
 
 include $(BITBOX)/lib/bitbox.mk

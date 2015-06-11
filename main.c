@@ -4,6 +4,7 @@
 
 #include <chiptune_player.h>
 #include "song.h"
+#include "ticktock.h"
 
 #include "build/tmap.h"
 
@@ -23,6 +24,7 @@
 uint8_t vram[SCREEN_Y][SCREEN_X];
 extern char build_sprite_spr[];
 extern const unsigned char songdata[];
+extern const unsigned char ticktockdata[];
 
 object *bg;
 
@@ -842,8 +844,11 @@ void game_frame( void ) {
     {
         // show time since beginning
         int t=time_remaining - (vga_frame-start_time)/60;
+        if (t == 11)
+            ply_init(TICKSONGLEN, ticktockdata);
         if (t <= 0 || PRESSED(0, start))
         {
+            ply_init(0, 0);
             if (PRESSED(0, start))
                 UNPRESS(0, start);
             if (memorization)

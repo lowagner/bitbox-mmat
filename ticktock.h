@@ -1,0 +1,2 @@
+#define TICKMAXTRACK	0x06
+#define TICKSONGLEN		0x04

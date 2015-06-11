@@ -2,13 +2,14 @@
 
 A memorization game for the bitbox console, a low-power retro-modern open-hardware 
 gaming platform, based on a Cortex M4 chip (STM32F407 specfically, with a clockrate
-of 168MHz and 192KB of RAM) and absolutely no GPU.  I haven't tested this code
-to see if it even runs on one, but you can play bitbox-mmat on a host computer.
+of 168MHz and 192KB of RAM) and absolutely no GPU.
 
 ![Picture of intro screen](https://github.com/lowagner/lowagner.github.io/blob/master/i/mmat.gif)
 
-More info about the bitbox console here:  
-http://bitboxconsole.blogspot.com/
+More info about the bitbox console, its games and hardware, available on the blog 
+and at the wiki:  
+http://bitboxconsole.blogspot.com/  
+https://github.com/makapuf/bitbox/wiki
 
 You can run this game on any host computer capable of compiling for the bitbox.  Get
 the open-source bitbox SDK from here:  
