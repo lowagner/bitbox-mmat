@@ -1,5 +1,6 @@
 #include "common.h"
 #include "memmat.h"
+#include "sandbox.h"
 #include <math.h> // sqrtf
 
 uint8_t vram[SCREEN_Y][SCREEN_X];
@@ -11,7 +12,7 @@ object *bg;
 
 // game state
 // ----
-void_fn* the_game_frame;
+frame_fn* the_game_frame;
 
 int game, level, delayed_level; // level 0 : intro, level 1 : game menu, next levels : games
 int time_remaining, pause, start_time;
@@ -34,7 +35,7 @@ uint8_t next_blocks[15][20];
 // constants
 // ----
 
-
+#define NUMBER_GAMES 2
 
 const int16_t gamepad_dpad = 15 << 8;
 const int16_t gamepad_any = 63;
@@ -45,11 +46,17 @@ const int16_t gamepad_any = 63;
 
 void enter_game(int g)
 {
-    switch (g)
+    game = g%NUMBER_GAMES; 
+    message("opening game %d:\n", game);
+    switch (game)
     {
-    case 1:
+    case 0:
         memmat_game_init();
         the_game_frame = &memmat_game_frame;
+        break;
+    case 1:
+        sandbox_game_init();
+        the_game_frame = &sandbox_game_frame;
         break;
     default:
         memmat_game_init();
@@ -71,11 +78,12 @@ void game_init( void )
     bg = tilemap_new(tmap_tset,0,0,TMAP_HEADER(SCREEN_X,SCREEN_Y,TSET_16, TMAP_U8), vram); 
     cursor.sprite = sprite_new(build_sprite_spr,0,0,0);
 
-    enter_game(1);
+    enter_game(0);
 }
 
 void game_frame( void ) 
 {
     if (the_game_frame)
-        the_game_frame();
+        if (the_game_frame())
+            enter_game(game+1);
 }

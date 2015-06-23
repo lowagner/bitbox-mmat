@@ -27,6 +27,43 @@ void set_block(int j, int i, uint8_t color)
     vram[j+1][i+1] = index;
 }
 
+void delete_block(int dj, int di)
+{
+    int i = di*2 + SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
+    int j = dj*2 + SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);    
+    vram[j][i] = tmap_bg;
+    vram[j][i+1] = tmap_bg;
+    vram[j+1][i] = tmap_bg;
+    vram[j+1][i+1] = tmap_bg;
+}
+
+void create_or_cycle_block(int dj, int di, int direction)
+{
+    int i = di*2 + SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
+    int j = dj*2 + SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);     
+    int8_t index = vram[j][i];
+    if (index < 16)
+    {
+        // cycle color
+        index = ((index/2 + direction));
+        if (index < 0)
+            index = 7;
+        else if (index > 3)
+            index = 1;
+        else
+            index = 2*index+1;
+    }
+    else
+        // choose a random index
+        index = (rand()%4)*2+1;
+    //message("index = %d\n", index);
+    vram[j][i] = index++;
+    vram[j][i+1] = index;
+    index += 7;
+    vram[j+1][i] = index++;
+    vram[j+1][i+1] = index;
+}
+
 void swap_blocks(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2)
 {
     int iUL = SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
@@ -38,20 +75,40 @@ void swap_blocks(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2)
     int i2 = iUL + di2*2;
     
     int index1 = vram[j1][i1]; // copy color 1 into memory
+    int index2 = vram[j2][i2]; // and color2 as well!
 
-    // move two into where 1 was
-    int index2 = vram[j2][i2]; 
-    vram[j1][i1] = index2++;
-    vram[j1][i1+1] = index2;
-    index2 += 7;
-    vram[j1+1][i1] = index2++;
-    vram[j1+1][i1+1] = index2;
-   
-    vram[j2][i2] = index1++;
-    vram[j2][i2+1] = index1;
-    index1 += 7;
-    vram[j2+1][i2] = index1++;
-    vram[j2+1][i2+1] = index1;
+    if (index2 < 16)
+    {
+        // move two into where 1 was
+        vram[j1][i1] = index2++;
+        vram[j1][i1+1] = index2;
+        index2 += 7;
+        vram[j1+1][i1] = index2++;
+        vram[j1+1][i1+1] = index2;
+    }
+    else
+    {
+        vram[j1][i1] = tmap_bg;
+        vram[j1][i1+1] = tmap_bg;
+        vram[j1+1][i1] = tmap_bg;
+        vram[j1+1][i1+1] = tmap_bg;
+    }
+  
+    if (index1 < 16)
+    {
+        vram[j2][i2] = index1++;
+        vram[j2][i2+1] = index1;
+        index1 += 7;
+        vram[j2+1][i2] = index1++;
+        vram[j2+1][i2+1] = index1;
+    }
+    else
+    { 
+        vram[j2][i2] = tmap_bg;
+        vram[j2][i2+1] = tmap_bg;
+        vram[j2+1][i2] = tmap_bg;
+        vram[j2+1][i2+1] = tmap_bg;
+    }
 }
 
 void read_presses()

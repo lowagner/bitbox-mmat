@@ -22,9 +22,9 @@
 #define UINT unsigned int
 #define LUINT unsigned long long int
 
-typedef void (void_fn)(void);
+typedef int (frame_fn)(void);
 
-extern void_fn* the_game_frame;
+extern frame_fn* the_game_frame;
 
 extern object *bg;
 
@@ -40,7 +40,7 @@ extern char build_sprite_spr[];
 extern const unsigned char songdata[];
 extern const unsigned char ticktockdata[];
 
-extern int state, level, delayed_level; // level 0 : intro, level 1 : game menu, next levels : games
+extern int game, level, delayed_level; // level 0 : intro, level 1 : game menu, next levels : games
 extern int time_remaining, pause, start_time;
 extern sij cursor;// player cursor position in the matrix.
 extern uint8_t memorization; // time to memorize or play
@@ -64,6 +64,8 @@ void move_sprite(sij* sij, int8_t dj, int8_t di);
 
 void set_lower_block(int j, int i, uint8_t color);
 
+void create_or_cycle_block(int dj, int di, int direction);
+void delete_block(int j, int i);
 void set_block(int j, int i, uint8_t color);
 
 void swap_blocks(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2);

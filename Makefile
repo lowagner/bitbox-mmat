@@ -4,8 +4,8 @@ NO_SDCARD=1
 
 NAME=mmat
 
-GAME_C_FILES = main.c song.c ticktock.c build/tmap.c common.c memmat.c 
-GAME_H_FILES = common.h memmat.h
+GAME_C_FILES = main.c song.c ticktock.c build/tmap.c common.c memmat.c sandbox.c
+GAME_H_FILES = common.h memmat.h sandbox.h
 GAME_BINARY_FILES = build/sprite.spr
 
 include $(BITBOX)/lib/bitbox.mk

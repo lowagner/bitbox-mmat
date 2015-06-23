@@ -73,7 +73,7 @@ void start_unjumble()
     vram[SCREEN_Y-5][SCREEN_X-4] = tmap_bg; // clear it out
 
     move_sprite(&cursor, nblocks_y-1, 0);
-    cursor.sprite->fr=1;  // switch cursor off
+    cursor.sprite->fr=0;  // switch cursor off
 
     const int j = 7;
     int i = SCREEN_X/2-4;
@@ -167,9 +167,9 @@ void score_layout()
         
         delayed_level = -1;
         pause = 150;
-        if (score > high_score[0])
+        if (score > high_score[game])
         {
-            high_score[0] = score;
+            high_score[game] = score;
         }
     }
     for (uint8_t dj=0; dj<nblocks_y; dj++)
@@ -494,16 +494,15 @@ void prep_next_blocks()
 }
 
 
-void enter_level(int l)
+void memmat_enter_level(int l)
 {
-
     message(" level = %d\n", l);
 
     level = l;
     if (level>=REAL_LEVEL) 
     {
         //actual_array = (int*)malloc(xblocks*yblocks * sizeof(int));
-        tmap_blit(bg,0,0, tmap_header, tmap_tmap[2]);
+        tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+2]);
         // music player stop
         ply_init(0,0);
         start_memorize(); // also lays out the blocks defined here.
@@ -511,7 +510,7 @@ void enter_level(int l)
     else
     {
         // copy background into vram
-        tmap_blit(bg,0,0, tmap_header, tmap_tmap[level]);
+        tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+level]);
         if (level == 0)
         {
             // reset everything
@@ -526,7 +525,7 @@ void enter_level(int l)
             // reset score
             score = STARTING_SCORE;
             cursor.sprite->x = -16;
-            if (high_score[0] > 0)
+            if (high_score[game] > 0)
             {
                 // paste high score on level 0, too
                 int j = 16;
@@ -557,7 +556,7 @@ void enter_level(int l)
                 vram[j][i--] = tmap_bg;
                 vram[j][i] = tmap_bg;
                 
-                LUINT score_breakdown = high_score[0];
+                LUINT score_breakdown = high_score[game];
                 i = SCREEN_X/2+10;
                 j = 19;
                 while (i >= SCREEN_X/2-8)
@@ -583,7 +582,7 @@ void enter_level(int l)
             // set them back at the end, however, so that play can continue.
             nblocks_x = bx;
             nblocks_y = by;
-            cursor.sprite->fr=1;
+            cursor.sprite->fr=0;
         }
         //selection.sprite->x = -16;
         pause = 30;
@@ -594,11 +593,11 @@ void enter_level(int l)
 
 void memmat_game_init( void ) 
 {
-    enter_level(START_LEVEL);
+    memmat_enter_level(START_LEVEL);
     ply_init(SONGLEN,songdata);
 }
 
-void memmat_game_frame(void) 
+int memmat_game_frame(void) 
 {
 
     ply_update();
@@ -618,8 +617,8 @@ void memmat_game_frame(void)
         }
         if (!pause)
             if (delayed_level)
-                enter_level(delayed_level+1);
-        return;
+                memmat_enter_level(delayed_level+1);
+        return 0;
     }
 
     if (level < REAL_LEVEL) 
@@ -647,12 +646,12 @@ void memmat_game_frame(void)
             case 0:
                 cursor.dj -= 1;
                 cursor.sprite->y -= 32;
-                cursor.sprite->fr=1; 
+                cursor.sprite->fr=0; 
                 break;
             case 1:
                 cursor.di += 1;
                 cursor.sprite->x += 32;
-                cursor.sprite->fr=0; 
+                cursor.sprite->fr=1; 
                 break;
             case 2:
                 cursor.di -= 1;
@@ -672,12 +671,17 @@ void memmat_game_frame(void)
         if (PRESSED(0,start))
         {
             my_gamepad_buttons[0] = 0;
-            enter_level(level+1);
+            memmat_enter_level(level+1);
+        }
+        else if (PRESSED(0, select))
+        {
+            my_gamepad_buttons[0] = 0;
+            return 1;
         }
         else if (PRESSED(0,any)) 
         {
             my_gamepad_buttons[0] = 0;
-            enter_level(level+1);
+            memmat_enter_level(level+1);
         }
     } 
     else 
@@ -694,12 +698,12 @@ void memmat_game_frame(void)
             if (memorization)
             {
                 start_unjumble();
-                return;
+                return 0;
             }
             else
             {
                 score_layout();
-                return;
+                return 0;
             }
         }
         vram[SCREEN_Y-5][SCREEN_X-7] = tmap_zero + (t/100)%10;
@@ -718,9 +722,9 @@ void memmat_game_frame(void)
         {
             // input handling
             if (PRESSED(0,any)) 
-                cursor.sprite->fr=0; 
-            else
                 cursor.sprite->fr=1; 
+            else
+                cursor.sprite->fr=0; 
             if (PRESSED(0, dpad))
             {
                 if (PRESSED(0,up))
@@ -772,6 +776,6 @@ void memmat_game_frame(void)
             }
         }
     }
-
+    return 0;
 }
 
