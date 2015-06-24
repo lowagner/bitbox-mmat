@@ -2,8 +2,6 @@
 #include "common.h"
 
 #define STARTING_SCORE 0 // change your starting score if you want to make it more difficult right away
-#define START_LEVEL 0
-#define REAL_LEVEL 2
 #define MAX_NBLOCKS_X 8
 #define MAX_NBLOCKS_Y 4
 #define BLOCKS_MAKE_NEXT 1
@@ -459,8 +457,8 @@ void prep_next_blocks()
         for (uint8_t i=0; i<next_nblocks_x; i++)
         {
             uint8_t r = index+rand()%(N-index);
-            uint8_t jr = r % next_nblocks_y;
-            uint8_t ir = r / next_nblocks_y;
+            uint8_t jr = r / next_nblocks_x;
+            uint8_t ir = r % next_nblocks_x;
             // swap i,j color with ir,jr color:
             uint8_t cr = next_blocks[jr][ir];
             next_blocks[jr][ir] = next_blocks[j][i];
