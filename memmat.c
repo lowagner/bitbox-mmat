@@ -594,7 +594,7 @@ void memmat_enter_level(int l)
 void memmat_game_init( void ) 
 {
     memmat_enter_level(START_LEVEL);
-    ply_init(SONGLEN,songdata);
+    //ply_init(SONGLEN,songdata);
 }
 
 int memmat_game_frame(void) 
@@ -676,7 +676,11 @@ int memmat_game_frame(void)
         else if (PRESSED(0, select))
         {
             my_gamepad_buttons[0] = 0;
-            return 1;
+            if (level == 0)
+                return 1;
+            else
+                memmat_enter_level(0);
+            return 0;
         }
         else if (PRESSED(0,any)) 
         {

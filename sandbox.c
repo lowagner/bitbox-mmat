@@ -41,7 +41,7 @@ void sandbox_enter_level(int l)
 void sandbox_game_init( void ) 
 {
     sandbox_enter_level(START_LEVEL);
-    ply_init(SONGLEN,songdata);
+    //ply_init(SONGLEN,songdata);
 }
 
 int sandbox_game_frame(void) 
@@ -75,7 +75,11 @@ int sandbox_game_frame(void)
         else if (PRESSED(0, select))
         {
             my_gamepad_buttons[0] = 0;
-            return 1;
+            if (level == 0)
+                return 1;
+            else
+                sandbox_enter_level(0);
+            return 0;
         }
         else if (PRESSED(0,any)) 
         {
