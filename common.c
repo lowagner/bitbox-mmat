@@ -19,12 +19,22 @@ void set_lower_block(int j, int i, uint8_t color)
 void set_block(int j, int i, uint8_t color)
 {
     // make block with upper-left location indices j,i have color
-    int index = 2*(color)+1;
-    vram[j][i] = index++;
-    vram[j][i+1] = index;
-    index += 7;
-    vram[j+1][i] = index++;
-    vram[j+1][i+1] = index;
+    if (color < 4)
+    {
+        int index = 2*(color)+1;
+        vram[j][i] = index++;
+        vram[j][i+1] = index;
+        index += 7;
+        vram[j+1][i] = index++;
+        vram[j+1][i+1] = index;
+    }
+    else
+    {
+        vram[j][i] = tmap_bg;
+        vram[j][i+1] = tmap_bg;
+        vram[j+1][i] = tmap_bg;
+        vram[j+1][i+1] = tmap_bg;
+    }
 }
 
 void delete_block(int dj, int di)

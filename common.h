@@ -11,6 +11,9 @@
 #include "song.h"
 #include "ticktock.h"
 
+#define START_LEVEL 0
+#define REAL_LEVEL 2
+
 #define UNPRESS(id, key) my_gamepad_buttons[id] -= gamepad_##key
 #define PRESSED(id, key) my_gamepad_buttons[id] & gamepad_##key
 #define PRESS(id, key) my_gamepad_buttons[id] |= gamepad_##key
@@ -71,5 +74,6 @@ void set_block(int j, int i, uint8_t color);
 void swap_blocks(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2);
 
 void read_presses();
+
 
 #endif

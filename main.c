@@ -1,6 +1,7 @@
 #include "common.h"
 #include "memmat.h"
-#include "sandbox.h"
+#include "painta.h"
+#include "simone.h"
 #include <math.h> // sqrtf
 
 uint8_t vram[SCREEN_Y][SCREEN_X];
@@ -35,7 +36,7 @@ uint8_t next_blocks[15][20];
 // constants
 // ----
 
-#define NUMBER_GAMES 2
+#define NUMBER_GAMES 3
 
 const int16_t gamepad_dpad = 15 << 8;
 const int16_t gamepad_any = 63;
@@ -55,8 +56,12 @@ void enter_game(int g)
         the_game_frame = &memmat_game_frame;
         break;
     case 1:
-        sandbox_game_init();
-        the_game_frame = &sandbox_game_frame;
+        painta_game_init();
+        the_game_frame = &painta_game_frame;
+        break;
+    case 2:
+        simone_game_init();
+        the_game_frame = &simone_game_frame;
         break;
     default:
         memmat_game_init();

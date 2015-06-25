@@ -60,7 +60,7 @@ void start_memorize()
     time_remaining = memorization_time; // in real seconds
     start_time = vga_frame;
     blocks_not_prepped = BLOCKS_MAKE_JUMBLE;
-    pause = 30;
+    pause = 10;
 
     memorization = 1;
 }
@@ -95,7 +95,7 @@ void start_unjumble()
                 
     time_remaining = 3*memorization_time-1;
     start_time = vga_frame;
-    pause = 30;
+    pause = 10;
     memorization = 0;
 
     blocks_not_prepped = BLOCKS_MAKE_NEXT;
@@ -164,7 +164,7 @@ void score_layout()
         vram[j][i++] = tmap_period;
         
         delayed_level = -1;
-        pause = 150;
+        pause = 180;
         if (score > high_score[game])
         {
             high_score[game] = score;
@@ -519,7 +519,6 @@ void memmat_enter_level(int l)
             nblocks_x = 2;
             nblocks_y = 2;
             memorization_time = 20;
-            delayed_level = 0;
             // reset score
             score = STARTING_SCORE;
             cursor.sprite->x = -16;
@@ -582,7 +581,6 @@ void memmat_enter_level(int l)
             nblocks_y = by;
             cursor.sprite->fr=0;
         }
-        //selection.sprite->x = -16;
         pause = 30;
     }
 
@@ -610,7 +608,7 @@ int memmat_game_frame(void)
         pause--;
         if (PRESSED(0,start) && pause > 5) 
         {
-            pause = 5;
+            pause = 2;
             UNPRESS(0, start);
         }
         if (!pause)

@@ -1,10 +1,7 @@
-#include "sandbox.h"
+#include "painta.h"
 #include "common.h"
 
-#define START_LEVEL 0
-#define REAL_LEVEL 2
-
-void sandbox_enter_level(int l)
+void painta_enter_level(int l)
 {
     message(" level = %d\n", l);
 
@@ -25,26 +22,19 @@ void sandbox_enter_level(int l)
         // copy background into vram
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+level]);
         cursor.sprite->x = -16;
-        if (level == 0)
-        {
-            // reset everything
-            delayed_level = 0;
-            // reset score
-        }
-        //selection.sprite->x = -16;
-        pause = 30;
+        pause = 10;
     }
 
     delayed_level = 0;
 }
 
-void sandbox_game_init( void ) 
+void painta_game_init( void ) 
 {
-    sandbox_enter_level(START_LEVEL);
+    painta_enter_level(START_LEVEL);
     //ply_init(SONGLEN,songdata);
 }
 
-int sandbox_game_frame(void) 
+int painta_game_frame(void) 
 {
     ply_update();
 
@@ -55,12 +45,12 @@ int sandbox_game_frame(void)
         pause--;
         if (PRESSED(0,start) && pause > 5) 
         {
-            pause = 5;
+            pause = 2;
             UNPRESS(0, start);
         }
         if (!pause)
             if (delayed_level)
-                sandbox_enter_level(delayed_level+1);
+                painta_enter_level(delayed_level+1);
         return 0;
     }
 
@@ -70,7 +60,7 @@ int sandbox_game_frame(void)
         if (PRESSED(0,start))
         {
             my_gamepad_buttons[0] = 0;
-            sandbox_enter_level(level+1);
+            painta_enter_level(level+1);
         }
         else if (PRESSED(0, select))
         {
@@ -78,13 +68,13 @@ int sandbox_game_frame(void)
             if (level == 0)
                 return 1;
             else
-                sandbox_enter_level(0);
+                painta_enter_level(0);
             return 0;
         }
         else if (PRESSED(0,any)) 
         {
             my_gamepad_buttons[0] = 0;
-            sandbox_enter_level(level+1);
+            painta_enter_level(level+1);
         }
     } 
     else 
@@ -106,7 +96,7 @@ int sandbox_game_frame(void)
         }
         if (PRESSED(0, select))
         {
-            sandbox_enter_level(0);
+            painta_enter_level(0);
             return 0;
         }
         if (PRESSED(0, X))
