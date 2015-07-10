@@ -43,26 +43,26 @@ void start_memorize()
    
 
     // get blocks setup
-    best_score = next_best_score;
-    nblocks_y = next_nblocks_y;
-    nblocks_x = next_nblocks_x;
-    for (uint8_t j=0; j<nblocks_y; j++)
-    for (uint8_t i=0; i<nblocks_x; i++)
-        blocks[j][i] = next_blocks[j][i];
+    D.mm.best_score = D.mm.next_best_score;
+    D.mm.nblocks_y = D.mm.next_nblocks_y;
+    D.mm.nblocks_x = D.mm.next_nblocks_x;
+    for (int j=0; j<D.mm.nblocks_y; j++)
+    for (int i=0; i<D.mm.nblocks_x; i++)
+        D.mm.blocks[j][i] = D.mm.next_blocks[j][i];
     // write down blocks
     // upper left j,i coordinates:
-    int iUL = SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
-    int jUL = SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);
-    for (uint8_t dj=0; dj<nblocks_y; dj++)
-    for (uint8_t di=0; di<nblocks_x; di++)
-        set_block(jUL+dj*2, iUL+di*2, blocks[dj][di]);
+    int iUL = SCREEN_X/2 - D.mm.nblocks_x; // - (nblocks_x % 2);
+    int jUL = SCREEN_Y/2 - D.mm.nblocks_y; // - (nblocks_y % 2);
+    for (int dj=0; dj<D.mm.nblocks_y; dj++)
+    for (int di=0; di<D.mm.nblocks_x; di++)
+        set_block(jUL+dj*2, iUL+di*2, D.mm.blocks[dj][di]);
     
-    time_remaining = memorization_time; // in real seconds
-    start_time = vga_frame;
-    blocks_not_prepped = BLOCKS_MAKE_JUMBLE;
+    D.mm.time_remaining = D.mm.memorization_time; // in real seconds
+    D.mm.start_time = vga_frame;
+    D.mm.blocks_not_prepped = BLOCKS_MAKE_JUMBLE;
     pause = 10;
 
-    memorization = 1;
+    D.mm.memorization = 1;
 }
 
 void start_unjumble()
@@ -70,7 +70,7 @@ void start_unjumble()
     // this is where exclamation point was on timer
     vram[SCREEN_Y-5][SCREEN_X-4] = tmap_bg; // clear it out
 
-    move_sprite(&cursor, nblocks_y-1, 0);
+    move_sprite_extra(&cursor, D.mm.nblocks_y-1, 0, D.mm.nblocks_x, D.mm.nblocks_y);
     cursor.sprite->fr=0;  // switch cursor off
 
     const int j = 7;
@@ -87,18 +87,18 @@ void start_unjumble()
     
     // write down blocks
     // upper left j,i coordinates:
-    int iUL = SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
-    int jUL = SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);
-    for (uint8_t dj=0; dj<nblocks_y; dj++)
-    for (uint8_t di=0; di<nblocks_x; di++)
-        set_block(jUL+dj*2, iUL+di*2, next_blocks[dj][di]);
+    int iUL = SCREEN_X/2 - D.mm.nblocks_x; // - (nblocks_x % 2);
+    int jUL = SCREEN_Y/2 - D.mm.nblocks_y; // - (nblocks_y % 2);
+    for (int dj=0; dj<D.mm.nblocks_y; dj++)
+    for (int di=0; di<D.mm.nblocks_x; di++)
+        set_block(jUL+dj*2, iUL+di*2, D.mm.next_blocks[dj][di]);
                 
-    time_remaining = 3*memorization_time-1;
-    start_time = vga_frame;
+    D.mm.time_remaining = 3*D.mm.memorization_time-1;
+    D.mm.start_time = vga_frame;
     pause = 10;
-    memorization = 0;
+    D.mm.memorization = 0;
 
-    blocks_not_prepped = BLOCKS_MAKE_NEXT;
+    D.mm.blocks_not_prepped = BLOCKS_MAKE_NEXT;
 }
 
 void score_layout()
@@ -106,19 +106,19 @@ void score_layout()
     //set block code
     // make block with upper-left location indices j,i have color
 
-    int iUL = SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
-    int jUL = SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);
-    uint8_t correct = 0;
-    for (uint8_t dj=0; dj<nblocks_y; dj++)
-    for (uint8_t di=0; di<nblocks_x; di++)
+    int iUL = SCREEN_X/2 - D.mm.nblocks_x; // - (nblocks_x % 2);
+    int jUL = SCREEN_Y/2 - D.mm.nblocks_y; // - (nblocks_y % 2);
+    int correct = 0;
+    for (int dj=0; dj<D.mm.nblocks_y; dj++)
+    for (int di=0; di<D.mm.nblocks_x; di++)
     {
-        uint8_t color = (vram[jUL+dj*2][iUL+di*2]-1)/2;
-        if (color == blocks[dj][di])
+        uint8_t color = vram[jUL+dj*2][iUL+di*2]/2;
+        if (color == D.mm.blocks[dj][di])
             correct += 1;
     }
-    uint8_t N = (nblocks_x*nblocks_y);
+    int N = (D.mm.nblocks_x*D.mm.nblocks_y);
     message("player got %d correct out of %d\n", correct, N);
-    score += (LUINT)(1.0*correct/N * next_best_score);
+    score += (LUINT)(1.0*correct/N * D.mm.best_score);
     int j = 7;
     int i = SCREEN_X/2-4;
     if (correct > 3*N/4)
@@ -170,115 +170,115 @@ void score_layout()
             high_score[game] = score;
         }
     }
-    for (uint8_t dj=0; dj<nblocks_y; dj++)
-    for (uint8_t di=0; di<nblocks_x; di++)
-        set_lower_block(jUL+dj*2, iUL+di*2, blocks[dj][di]);
+    for (int dj=0; dj<D.mm.nblocks_y; dj++)
+    for (int di=0; di<D.mm.nblocks_x; di++)
+        set_lower_block(jUL+dj*2, iUL+di*2, D.mm.blocks[dj][di]);
 }
 
 void make_board_easier()
 {
-    if (next_nblocks_x > 2 || next_nblocks_y > 2)
+    if (D.mm.next_nblocks_x > 2 || D.mm.next_nblocks_y > 2)
     {
-        if (next_ncol == 2)
+        if (D.mm.next_ncol == 2)
         {
             // can only decrease the board size
-            if (next_nblocks_x == 1)
+            if (D.mm.next_nblocks_x == 1)
                 // it is safe to decrement y, since one of them is greater than 2
-                next_nblocks_y -= 1;
-            else if (next_nblocks_y == 1)
-                next_nblocks_x -= 1;
+                D.mm.next_nblocks_y -= 1;
+            else if (D.mm.next_nblocks_y == 1)
+                D.mm.next_nblocks_x -= 1;
             else if (rand()%10 < 6)
-                next_nblocks_x -= 1;
+                D.mm.next_nblocks_x -= 1;
             else
-                next_nblocks_y -= 1;
+                D.mm.next_nblocks_y -= 1;
         }
         else
         {
-            if (next_nblocks_x == 1)
+            if (D.mm.next_nblocks_x == 1)
             {
                 if (rand()%10 < 8)
-                    next_nblocks_y -= 1;
+                    D.mm.next_nblocks_y -= 1;
                 else
-                    next_ncol -= 1;
+                    D.mm.next_ncol -= 1;
             }
-            else if (next_nblocks_y == 1)
+            else if (D.mm.next_nblocks_y == 1)
             {
                 if (rand()%10 < 8)
-                    next_nblocks_x -= 1;
+                    D.mm.next_nblocks_x -= 1;
                 else
-                    next_ncol -= 1;
+                    D.mm.next_ncol -= 1;
             }
             else if (rand()%10 < 5)
-                next_nblocks_x -= 1;
+                D.mm.next_nblocks_x -= 1;
             else if (rand()%10 < 8)
-                next_nblocks_y -= 1;
+                D.mm.next_nblocks_y -= 1;
             else
-                next_ncol -= 1;
+                D.mm.next_ncol -= 1;
         }
     }
     else
     {
-        if (next_ncol == 2)
+        if (D.mm.next_ncol == 2)
         {
             // just give up, we have a very small board
-            blocks_not_prepped = 0;
+            D.mm.blocks_not_prepped = 0;
             message("whatever, get over it\n");
             return;
         }
         else
         {
-            next_ncol -= 1;
+            D.mm.next_ncol -= 1;
         }
     }
-    blocks_not_prepped = BLOCKS_MAKE_NEXT;
+    D.mm.blocks_not_prepped = BLOCKS_MAKE_NEXT;
 }
 
 void make_board_harder()
 {
-    if (next_nblocks_x*next_nblocks_y < MAX_NBLOCKS_X*MAX_NBLOCKS_Y)
+    if (D.mm.next_nblocks_x*D.mm.next_nblocks_y < MAX_NBLOCKS_X*MAX_NBLOCKS_Y)
     {
-        if (next_ncol == 4)
+        if (D.mm.next_ncol == 4)
         {
             // can only increase the board size
-            if (next_nblocks_x == MAX_NBLOCKS_X)
+            if (D.mm.next_nblocks_x == MAX_NBLOCKS_X)
                 // it is safe to increment y, since N < maxx*maxy
-                next_nblocks_y += 1;
-            else if (next_nblocks_y == MAX_NBLOCKS_Y)
-                next_nblocks_x += 1;
+                D.mm.next_nblocks_y += 1;
+            else if (D.mm.next_nblocks_y == MAX_NBLOCKS_Y)
+                D.mm.next_nblocks_x += 1;
             else if (rand()%10 < 5)
-                next_nblocks_x += 1;
+                D.mm.next_nblocks_x += 1;
             else
-                next_nblocks_y += 1;
+                D.mm.next_nblocks_y += 1;
         }
         else
         {
-            if (next_nblocks_x == MAX_NBLOCKS_X)
+            if (D.mm.next_nblocks_x == MAX_NBLOCKS_X)
             {
                 // it is safe to increment y, since N < maxx*maxy
                 if (rand()%10 < 7)
-                    next_nblocks_y += 1;
+                    D.mm.next_nblocks_y += 1;
                 else
-                    next_ncol += 1;
+                    D.mm.next_ncol += 1;
             }
-            else if (next_nblocks_y == MAX_NBLOCKS_Y)
+            else if (D.mm.next_nblocks_y == MAX_NBLOCKS_Y)
             {
                 if (rand()%10 < 7)
-                    next_nblocks_x += 1;
+                    D.mm.next_nblocks_x += 1;
                 else
-                    next_ncol += 1;
+                    D.mm.next_ncol += 1;
             }
             else if (rand()%10 < 5)
-                next_nblocks_x += 1;
+                D.mm.next_nblocks_x += 1;
             else if (rand()%10 < 7)
-                next_nblocks_y += 1;
+                D.mm.next_nblocks_y += 1;
             else
-                next_ncol += 1;
+                D.mm.next_ncol += 1;
         }
     }
     else
     {
         // board is huge, can only up number of colors
-        if (next_ncol == 4)
+        if (D.mm.next_ncol == 4)
         {
             // player has a super memory, he's beaten the generator
             //blocks_not_prepped = 0;
@@ -286,39 +286,39 @@ void make_board_harder()
         }
         else
         {
-            next_ncol += 1;
+            D.mm.next_ncol += 1;
         }
     }
-    blocks_not_prepped = BLOCKS_MAKE_NEXT;
+    D.mm.blocks_not_prepped = BLOCKS_MAKE_NEXT;
 }
 
 void prep_next_blocks()
 {
-    switch (blocks_not_prepped)
+    switch (D.mm.blocks_not_prepped)
     {
       case (BLOCKS_MAKE_NEXT):
       {
         message("prepping next blocks\n");
         // make our next memorization
-        srand( vga_frame ); // seed the random number generator
+        srand(vga_frame); // seed the random number generator
         uint8_t colstarter = rand()%4;
-        for (uint8_t i=0; i<4; i++) colorbucket[i] = 0;
-        for (uint8_t j=0; j<next_nblocks_y; j++)
-        for (uint8_t i=0; i<next_nblocks_x; i++)
+        for (int i=0; i<4; i++) D.mm.colorbucket[i] = 0;
+        for (int j=0; j<D.mm.next_nblocks_y; j++)
+        for (int i=0; i<D.mm.next_nblocks_x; i++)
         {
-            next_blocks[j][i] = (colstarter + rand()%next_ncol)%4;
-            colorbucket[next_blocks[j][i]] += 1;
+            D.mm.next_blocks[j][i] = (colstarter + rand()%D.mm.next_ncol)%4;
+            D.mm.colorbucket[D.mm.next_blocks[j][i]] += 1;
         }
-        blocks_not_prepped = BLOCKS_CHECK_NEXT;
-        uint8_t N = next_nblocks_x*next_nblocks_y;
+        D.mm.blocks_not_prepped = BLOCKS_CHECK_NEXT;
+        int N = D.mm.next_nblocks_x*D.mm.next_nblocks_y;
         uint8_t max_bucket = 0;
-        for (uint8_t i=0; i<4; i++)
+        for (int i=0; i<4; i++)
         {
-            if (colorbucket[i] > max_bucket)
-                max_bucket = colorbucket[i];
+            if (D.mm.colorbucket[i] > max_bucket)
+                max_bucket = D.mm.colorbucket[i];
         }
-        max_incorrect = 2*(N - max_bucket);
-        message("max incorrect you can get in this one is %d\n",max_incorrect);
+        D.mm.max_incorrect = 2*(N - max_bucket);
+        message("max incorrect you can get in this one is %d\n",D.mm.max_incorrect);
         break;
       }
       case (BLOCKS_CHECK_NEXT):
@@ -326,124 +326,124 @@ void prep_next_blocks()
         message("checking next blocks\n");
         // check whether "next_blocks" is difficult enough (and not too difficult)
         // first check color distribution:
-        next_best_score = 1;
-        uint8_t N = next_nblocks_x * next_nblocks_y;
-        for (uint8_t i=0; i<4; i++)
-            if (colorbucket[i] > 0)
-                next_best_score *= (colorbucket[i])*(N - colorbucket[i]);
+        D.mm.next_best_score = 1;
+        int N = D.mm.next_nblocks_x * D.mm.next_nblocks_y;
+        for (int i=0; i<4; i++)
+            if (D.mm.colorbucket[i] > 0)
+                D.mm.next_best_score *= (D.mm.colorbucket[i])*(N - D.mm.colorbucket[i]);
 
-        if (next_best_score == 0)
+        if (D.mm.next_best_score == 0)
         {
             // very horrible design.  somehow had all one color
             message("bad blocks\n");
-            blocks_not_prepped = BLOCKS_MAKE_NEXT;
+            D.mm.blocks_not_prepped = BLOCKS_MAKE_NEXT;
             // make it likely that won't happen again:
             if (N == 1)
-                next_nblocks_x = 2;
-            if (next_ncol < 4)
-                next_ncol += 1;
+                D.mm.next_nblocks_x = 2;
+            if (D.mm.next_ncol < 4)
+                D.mm.next_ncol += 1;
             break;
         }
 
-        if (next_best_score < score/4)
+        if (D.mm.next_best_score < score/4)
         {
             // board not difficult enough
             make_board_harder();
             break;
         }
 
-        blocks_not_prepped = BLOCKS_CHECK_NEXT2;
+        D.mm.blocks_not_prepped = BLOCKS_CHECK_NEXT2;
       }
       case (BLOCKS_CHECK_NEXT2):
       {
         // things look good so far.  check for corner cases
-        message("next base score is %lu\n",next_best_score);
-        if (next_nblocks_y == 1)
+        message("next base score is %lu\n",D.mm.next_best_score);
+        if (D.mm.next_nblocks_y == 1)
         {
-            for (uint8_t i=1; i<next_nblocks_x; i++)
-                if (next_blocks[0][i-1] == next_blocks[0][i])
-                    next_best_score -= 2;
+            for (int i=1; i<D.mm.next_nblocks_x; i++)
+                if (D.mm.next_blocks[0][i-1] == D.mm.next_blocks[0][i])
+                    D.mm.next_best_score -= 2;
         }
-        else if (next_nblocks_x == 1)
+        else if (D.mm.next_nblocks_x == 1)
         {
-            for (uint8_t j=1; j<next_nblocks_y; j++)
-                if (next_blocks[j-1][0] == next_blocks[j][0])
-                    next_best_score -= 2;
+            for (int j=1; j<D.mm.next_nblocks_y; j++)
+                if (D.mm.next_blocks[j-1][0] == D.mm.next_blocks[j][0])
+                    D.mm.next_best_score -= 2;
         }
-        else if (next_nblocks_y == 2)
+        else if (D.mm.next_nblocks_y == 2)
         {
-            if (next_blocks[1][0] == next_blocks[0][0])
-                next_best_score -= 2;
-            for (uint8_t i=1; i<next_nblocks_x; i++)
+            if (D.mm.next_blocks[1][0] == D.mm.next_blocks[0][0])
+                D.mm.next_best_score -= 2;
+            for (int i=1; i<D.mm.next_nblocks_x; i++)
             {
-                if (next_blocks[0][i-1] == next_blocks[0][i])
-                    next_best_score -= 2;
-                if (next_blocks[1][i-1] == next_blocks[1][i])
-                    next_best_score -= 2;
-                if (next_blocks[0][i-1] == next_blocks[1][i])
-                    next_best_score -= 1;
-                if (next_blocks[1][i-1] == next_blocks[0][i])
-                    next_best_score -= 1;
-                if (next_blocks[1][i] == next_blocks[0][i])
-                    next_best_score -= 2;
+                if (D.mm.next_blocks[0][i-1] == D.mm.next_blocks[0][i])
+                    D.mm.next_best_score -= 2;
+                if (D.mm.next_blocks[1][i-1] == D.mm.next_blocks[1][i])
+                    D.mm.next_best_score -= 2;
+                if (D.mm.next_blocks[0][i-1] == D.mm.next_blocks[1][i])
+                    D.mm.next_best_score -= 1;
+                if (D.mm.next_blocks[1][i-1] == D.mm.next_blocks[0][i])
+                    D.mm.next_best_score -= 1;
+                if (D.mm.next_blocks[1][i] == D.mm.next_blocks[0][i])
+                    D.mm.next_best_score -= 2;
             }
         }
-        else if (next_nblocks_x == 2)
+        else if (D.mm.next_nblocks_x == 2)
         {
-            if (next_blocks[0][1] == next_blocks[0][0])
-                next_best_score -= 2;
-            for (uint8_t j=1; j<next_nblocks_y; j++)
+            if (D.mm.next_blocks[0][1] == D.mm.next_blocks[0][0])
+                D.mm.next_best_score -= 2;
+            for (int j=1; j<D.mm.next_nblocks_y; j++)
             {
-                if (next_blocks[j-1][0] == next_blocks[j][0])
-                    next_best_score -= 2;
-                if (next_blocks[j-1][1] == next_blocks[j][1])
-                    next_best_score -= 2;
-                if (next_blocks[j-1][0] == next_blocks[j][1])
-                    next_best_score -= 1;
-                if (next_blocks[j-1][1] == next_blocks[j][0])
-                    next_best_score -= 1;
-                if (next_blocks[j][1] == next_blocks[j][0])
-                    next_best_score -= 2;
+                if (D.mm.next_blocks[j-1][0] == D.mm.next_blocks[j][0])
+                    D.mm.next_best_score -= 2;
+                if (D.mm.next_blocks[j-1][1] == D.mm.next_blocks[j][1])
+                    D.mm.next_best_score -= 2;
+                if (D.mm.next_blocks[j-1][0] == D.mm.next_blocks[j][1])
+                    D.mm.next_best_score -= 1;
+                if (D.mm.next_blocks[j-1][1] == D.mm.next_blocks[j][0])
+                    D.mm.next_best_score -= 1;
+                if (D.mm.next_blocks[j][1] == D.mm.next_blocks[j][0])
+                    D.mm.next_best_score -= 2;
             }
         }
         else
         {
             // check the bottom row
-            for (uint8_t i=1; i<next_nblocks_x; i++)
-                if (next_blocks[0][i-1] == next_blocks[0][i])
-                    next_best_score -= 2;
+            for (int i=1; i<D.mm.next_nblocks_x; i++)
+                if (D.mm.next_blocks[0][i-1] == D.mm.next_blocks[0][i])
+                    D.mm.next_best_score -= 2;
 
-            for (uint8_t j=1; j<next_nblocks_y; j++)
+            for (int j=1; j<D.mm.next_nblocks_y; j++)
             {
                 // check the left column
-                if (next_blocks[j-1][0] == next_blocks[j][0])
-                    next_best_score -= 2;
-                for (uint8_t i=1; i<next_nblocks_x; i++)
+                if (D.mm.next_blocks[j-1][0] == D.mm.next_blocks[j][0])
+                    D.mm.next_best_score -= 2;
+                for (int i=1; i<D.mm.next_nblocks_x; i++)
                 {
                     // check the matrix
-                    if (next_blocks[j][i] == next_blocks[j-1][i])
-                        next_best_score -= 2;
-                    if (next_blocks[j][i] == next_blocks[j][i-1])
-                        next_best_score -= 2;
-                    if (next_blocks[j][i-1] == next_blocks[j-1][i])
-                        next_best_score -= 1;
+                    if (D.mm.next_blocks[j][i] == D.mm.next_blocks[j-1][i])
+                        D.mm.next_best_score -= 2;
+                    if (D.mm.next_blocks[j][i] == D.mm.next_blocks[j][i-1])
+                        D.mm.next_best_score -= 2;
+                    if (D.mm.next_blocks[j][i-1] == D.mm.next_blocks[j-1][i])
+                        D.mm.next_best_score -= 1;
                 }
             }
         }
-        message("final refined score is %lu\n",next_best_score);
-        if (next_best_score < score/6)
+        message("final refined score is %lu\n",D.mm.next_best_score);
+        if (D.mm.next_best_score < score/6)
         {
             message("oops, too easy\n");
             make_board_harder();
             break;
         }
-        else if (next_best_score > (score/2+16))
+        else if (D.mm.next_best_score > (score/2+16))
         {
             message("oops, too hard\n");
             make_board_easier();
             break;
         }
-        blocks_not_prepped = 0;
+        D.mm.blocks_not_prepped = 0;
         // if not, set blocks_not_prepped to BLOCKS_MAKE_NEXT
         break;
       }
@@ -451,41 +451,41 @@ void prep_next_blocks()
       {
         message("making the jumble\n");
         // create a jumble of the current blocks
-        uint8_t index = 0;
-        uint8_t N = next_nblocks_x * next_nblocks_y;
-        for (uint8_t j=0; j<next_nblocks_y; j++)
-        for (uint8_t i=0; i<next_nblocks_x; i++)
+        int index = 0;
+        int N = D.mm.next_nblocks_x * D.mm.next_nblocks_y;
+        for (int j=0; j<D.mm.next_nblocks_y; j++)
+        for (int i=0; i<D.mm.next_nblocks_x; i++)
         {
-            uint8_t r = index+rand()%(N-index);
-            uint8_t jr = r / next_nblocks_x;
-            uint8_t ir = r % next_nblocks_x;
+            int r = index+rand()%(N-index);
+            int jr = r / D.mm.next_nblocks_x;
+            int ir = r % D.mm.next_nblocks_x;
             // swap i,j color with ir,jr color:
-            uint8_t cr = next_blocks[jr][ir];
-            next_blocks[jr][ir] = next_blocks[j][i];
-            next_blocks[j][i] = cr;
+            uint8_t cr = D.mm.next_blocks[jr][ir];
+            D.mm.next_blocks[jr][ir] = D.mm.next_blocks[j][i];
+            D.mm.next_blocks[j][i] = cr;
             index += 1;
         }
-        blocks_not_prepped = BLOCKS_CHECK_JUMBLE;
+        D.mm.blocks_not_prepped = BLOCKS_CHECK_JUMBLE;
         break;
       }
       case (BLOCKS_CHECK_JUMBLE):
       {
         message("checking the jumble\n");
         // check whether jumble is different enough
-        int8_t incorrect = 0;
-        for (uint8_t j=0; j<nblocks_y; j++)
-        for (uint8_t i=0; i<nblocks_x; i++)
+        uint8_t incorrect = 0;
+        for (int j=0; j<D.mm.nblocks_y; j++)
+        for (int i=0; i<D.mm.nblocks_x; i++)
         {
-            if (next_blocks[j][i] != blocks[j][i])
+            if (D.mm.next_blocks[j][i] != D.mm.blocks[j][i])
                 incorrect += 1;
         }
-        int8_t N = next_nblocks_x * next_nblocks_y;
-        if ((incorrect <= max_incorrect/2)
+        int N = D.mm.next_nblocks_x * D.mm.next_nblocks_y;
+        if ((incorrect <= D.mm.max_incorrect/2)
            && (incorrect <= N/2) )
-            blocks_not_prepped = BLOCKS_MAKE_JUMBLE;
+            D.mm.blocks_not_prepped = BLOCKS_MAKE_JUMBLE;
         else
             // it'll be tolerable
-            blocks_not_prepped = 0;
+            D.mm.blocks_not_prepped = 0;
         break;
       }
     }
@@ -512,13 +512,13 @@ void memmat_enter_level(int l)
         if (level == 0)
         {
             // reset everything
-            blocks_not_prepped = BLOCKS_MAKE_NEXT;
-            next_nblocks_x = 2;
-            next_nblocks_y = 2;
-            next_ncol = 2;
-            nblocks_x = 2;
-            nblocks_y = 2;
-            memorization_time = 20;
+            D.mm.blocks_not_prepped = BLOCKS_MAKE_NEXT;
+            D.mm.next_nblocks_x = 2;
+            D.mm.next_nblocks_y = 2;
+            D.mm.next_ncol = 2;
+            D.mm.nblocks_x = 2;
+            D.mm.nblocks_y = 2;
+            D.mm.memorization_time = 20;
             // reset score
             score = STARTING_SCORE;
             cursor.sprite->x = -16;
@@ -568,20 +568,9 @@ void memmat_enter_level(int l)
         }
         else // level 1 (tutorial)
         {
-            // in case player starts with score>0
-            // we need to override blocks to 2x2, so that move_sprite works well.
-            uint8_t bx, by;
-            bx = nblocks_x;
-            by = nblocks_y;
-            nblocks_x = 2;
-            nblocks_y = 2;
-            move_sprite(&cursor, nblocks_y,-5);
-            // set them back at the end, however, so that play can continue.
-            nblocks_x = bx;
-            nblocks_y = by;
+            move_sprite_extra(&cursor, 2,-5, 2, 2);
             cursor.sprite->fr=0;
         }
-        pause = 30;
     }
 
     delayed_level = 0;
@@ -600,7 +589,7 @@ int memmat_game_frame(void)
 
     read_presses();
 
-    if (blocks_not_prepped)
+    if (D.mm.blocks_not_prepped)
         prep_next_blocks();
 
     if (pause)
@@ -651,7 +640,7 @@ int memmat_game_frame(void)
                 break;
             case 2:
                 cursor.di -= 1;
-                swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di+1);
+                swap_blocks_extra(cursor.dj, cursor.di, cursor.dj, cursor.di+1, D.mm.nblocks_x, D.mm.nblocks_y);
                 cursor.sprite->x -= 32;
                 break;
             case 3:
@@ -687,7 +676,7 @@ int memmat_game_frame(void)
     else 
     {
         // show time since beginning
-        int t=time_remaining - (vga_frame-start_time)/60;
+        int t=D.mm.time_remaining - (vga_frame-D.mm.start_time)/60;
         if (t == 11)
             ply_init(TICKSONGLEN, ticktockdata);
         if (t <= 0 || PRESSED(0, start))
@@ -695,7 +684,7 @@ int memmat_game_frame(void)
             ply_init(0, 0);
             if (PRESSED(0, start))
                 UNPRESS(0, start);
-            if (memorization)
+            if (D.mm.memorization)
             {
                 start_unjumble();
                 return 0;
@@ -718,7 +707,7 @@ int memmat_game_frame(void)
                 vram[SCREEN_Y-5][SCREEN_X-4] = tmap_bg;
         }
 
-        if (!memorization)
+        if (!D.mm.memorization)
         {
             // input handling
             if (PRESSED(0,any)) 
@@ -734,7 +723,7 @@ int memmat_game_frame(void)
                         cursor.dj -= 1;
                         cursor.sprite->y -= 32;
                         if (PRESSED(0, any))
-                            swap_blocks(cursor.dj, cursor.di, cursor.dj+1, cursor.di);
+                            swap_blocks_extra(cursor.dj, cursor.di, cursor.dj+1, cursor.di, D.mm.nblocks_x, D.mm.nblocks_y);
                             // don't unpress here, because we want player to be able
                             // to chain moving things around
                     }
@@ -742,23 +731,23 @@ int memmat_game_frame(void)
                 }
                 else if (PRESSED(0, down))
                 {
-                    if (cursor.dj < nblocks_y-1)
+                    if (cursor.dj < D.mm.nblocks_y-1)
                     {
                         cursor.dj += 1;
                         cursor.sprite->y += 32;
                         if (PRESSED(0, any))
-                            swap_blocks(cursor.dj, cursor.di, cursor.dj-1, cursor.di);
+                            swap_blocks_extra(cursor.dj, cursor.di, cursor.dj-1, cursor.di, D.mm.nblocks_x, D.mm.nblocks_y);
                     }
                     UNPRESS(0, down);
                 }
                 else if (PRESSED(0, right))
                 {
-                    if (cursor.di < nblocks_x-1)
+                    if (cursor.di < D.mm.nblocks_x-1)
                     {
                         cursor.di += 1;
                         cursor.sprite->x += 32;
                         if (PRESSED(0, any))
-                            swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di-1);
+                            swap_blocks_extra(cursor.dj, cursor.di, cursor.dj, cursor.di-1, D.mm.nblocks_x, D.mm.nblocks_y);
                     }
                     UNPRESS(0, right);
                 }
@@ -769,7 +758,7 @@ int memmat_game_frame(void)
                         cursor.di -= 1;
                         cursor.sprite->x -= 32;
                         if (PRESSED(0, any))
-                            swap_blocks(cursor.dj, cursor.di, cursor.dj, cursor.di+1);
+                            swap_blocks_extra(cursor.dj, cursor.di, cursor.dj, cursor.di+1, D.mm.nblocks_x, D.mm.nblocks_y);
                     }
                     UNPRESS(0, left);
                 }

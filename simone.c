@@ -1,35 +1,49 @@
 #include "simone.h"
 #include "common.h"
 
-// reuse a few variables from mmat that we don't use:
-
-#define current_round memorization_time
-#define final_round start_time
-#define current_note blocks_not_prepped 
-#define incorrect next_ncol
-
-
-void get_next_blocks(int round)
+inline void update_round()
 {
-    for (uint8_t i=0; i<4; ++i)
-        colorbucket[i] = rand()%4; // must be in the range 0 to 3
+    int j = 25;
+    int i = 35;
+    int round = D.ss.current_round;
+    while (i > 31)
+    {
+        vram[j][i--] = tmap_zero + (round % 10);
+        round /= 10;
+    }
+}
 
-    // put the result into the first four values of next_blocks
-    blocks[round/nblocks_x][round%nblocks_x] = (
-        (colorbucket[0]<<6) |
-        (colorbucket[1]<<4) | 
-        (colorbucket[2]<<2) |
-        (colorbucket[3]<<0)
+void pack_next_blocks(int round)
+{
+    // re-seed the random number generator every once in a while,
+    // so that the player can't get spiffy:
+    if (round % 16 == 0)
+        srand(vga_frame);
+
+    for (int i=0; i<4; ++i)
+        D.ss.next_blocks[i] = rand()%4; // must be in the range 0 to 3
+    
+    message("got blocks %d, %d, %d, %d for round %d\n", D.ss.next_blocks[0], 
+        D.ss.next_blocks[1],
+        D.ss.next_blocks[2],
+        D.ss.next_blocks[3], round);
+
+    // put the result into the first four values of packed_blocks
+    D.ss.packed_blocks[round] = (
+        (D.ss.next_blocks[0]<<6) |
+        (D.ss.next_blocks[1]<<4) | 
+        (D.ss.next_blocks[2]<<2) |
+        (D.ss.next_blocks[3]<<0)
     );
 }
 
 void decode_blocks(int round)
 {
-    uint8_t block = blocks[round/nblocks_x][round%nblocks_x];
-    colorbucket[0] = (block>>6) & 3;
-    colorbucket[1] = (block>>4) & 3;
-    colorbucket[2] = (block>>2) & 3;
-    colorbucket[3] = (block>>0) & 3;
+    uint8_t block = D.ss.packed_blocks[round];
+    D.ss.next_blocks[0] = (block>>6) & 3;
+    D.ss.next_blocks[1] = (block>>4) & 3;
+    D.ss.next_blocks[2] = (block>>2) & 3;
+    D.ss.next_blocks[3] = (block>>0) & 3;
 }
 
 
@@ -39,33 +53,32 @@ void simone_enter_level(int l)
     cursor.sprite->x = -16;
 
     level = l;
+    delayed_level = 0;
     if (level>=REAL_LEVEL) 
     {
         //actual_array = (int*)malloc(xblocks*yblocks * sizeof(int));
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+2]);
         // music player stop
         ply_init(0,0);
-        nblocks_x = 20;
-        nblocks_y = 15;
 
-        memorization = 1;
-        current_round = 0;
+        D.ss.memorization = 1;
+        D.ss.final_round = 0;  // how many rounds have we gotten up to
+        D.ss.final_note = 1;   // how many notes we've gotten up to.
+        delayed_level = 2;
+        if (!pause)
+            pause = 2;
     }
     else
     {
         // copy background into vram
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+level]);
-        pause = 10;
         if (level == 0)
         {
-            // initialize everything
-            final_round = 0;  // how many rounds have we gotten up to
-            current_note = 0;
-            get_next_blocks(0); // get the first set of blocks into "colorbucket"
+            // initialize things
+            score = 0;
+            pack_next_blocks(0); // get the first set of blocks into "D.ss.packed_blocks"
         }
     }
-
-    delayed_level = 0;
 }
 
 void simone_game_init( void ) 
@@ -89,8 +102,47 @@ int simone_game_frame(void)
             UNPRESS(0, start);
         }
         if (!pause)
-            if (delayed_level)
-                simone_enter_level(delayed_level+1);
+        if (delayed_level)
+        {
+            if (delayed_level == -1)
+                simone_enter_level(0);
+            else
+            {
+                // switch from memorization to play or vice versa
+                D.ss.current_round = 0;
+                D.ss.current_note = 0;
+                update_round();
+
+                if (D.ss.memorization)
+                {
+                    vram[8][16] = tmap_m;
+                    vram[8][17] = tmap_e;
+                    vram[8][18] = tmap_m;
+                    vram[8][19] = tmap_o;
+                    vram[8][20] = tmap_r;
+                    vram[8][21] = tmap_i;
+                    vram[8][22] = tmap_z;
+                    vram[8][23] = tmap_e;
+
+                }
+                else
+                {
+                    decode_blocks(D.ss.current_round);
+
+                    D.ss.incorrect = 0;
+                    vram[8][16] = tmap_bg;
+                    vram[8][17] = tmap_bg;
+                    vram[8][18] = tmap_p;
+                    vram[8][19] = tmap_l;
+                    vram[8][20] = tmap_a;
+                    vram[8][21] = tmap_y;
+                    vram[8][22] = tmap_bg;
+                    vram[8][23] = tmap_bg;
+                }
+                for (int i=0; i<4; i++)
+                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
+            }
+        }
         return 0;
     }
 
@@ -119,33 +171,36 @@ int simone_game_frame(void)
     } 
     else 
     {
-        if (memorization)
+        if (D.ss.memorization)
         {
             if (vga_frame % 60 == 0)
             {
-                if (current_note < 4)
+                if (D.ss.current_note == 0)
                 {
-                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*current_note, colorbucket[current_note]);
-                    ++current_note;
+                    update_round();
+                    for (int i=1; i<4; i++)
+                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
+                    decode_blocks(D.ss.current_round);
+                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
+                    ++D.ss.current_note;
                 }
                 else
                 {
-                    ++current_round;
-                    current_note = 0;
-                    if (current_round > final_round)
+                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
+                    ++D.ss.current_note;
+                    if (D.ss.current_note > 3)
                     {
-                        memorization = 0;
-                        current_round = 0;
-
-                        vram[10][14] = tmap_p;
-                        vram[10][15] = tmap_l;
-                        vram[10][16] = tmap_a;
-                        vram[10][17] = tmap_y;
+                        // increment the round
+                        ++D.ss.current_round;
+                        D.ss.current_note = 0;
                     }
-                    else
-                        decode_blocks(current_round);
-                    for (uint8_t i=0; i<4; i++)
-                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
+                }
+
+                if (D.ss.current_round*4 + D.ss.current_note >= D.ss.final_note)
+                {
+                    D.ss.memorization = 0;
+                    delayed_level = 2;
+                    pause = 60;
                 }
             }
         }
@@ -153,89 +208,145 @@ int simone_game_frame(void)
         {
             if (PRESSED(0, dpad))
             {
-                set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*current_note, colorbucket[current_note]);
+                set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
                 if (PRESSED(0,up))
                 {
-                    if (colorbucket[current_note] == 2)
+                    if (D.ss.next_blocks[D.ss.current_note] == 2)
                     {
                         // play nice note?
+                        score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        update_score();
                     }
                     else
                     {
                         // play bad note?
-                        ++incorrect;
+                        ++D.ss.incorrect;
                     }
-                    ++current_note;
+                    ++D.ss.current_note;
 
                     UNPRESS(0, up);
                 }
                 else if (PRESSED(0, down))
                 {
-                    if (colorbucket[current_note] == 3)
+                    if (D.ss.next_blocks[D.ss.current_note] == 3)
                     {
                         // play nice note?
+                        score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        update_score();
                     }
                     else
                     {
                         // play bad note?
-                        ++incorrect;
+                        ++D.ss.incorrect;
                     }
-                    ++current_note;
+                    ++D.ss.current_note;
                     UNPRESS(0, down);
                 }
                 else if (PRESSED(0, right))
                 {
-                    if (colorbucket[current_note] == 0)
+                    if (D.ss.next_blocks[D.ss.current_note] == 0)
                     {
                         // play nice note?
+                        score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        update_score();
                     }
                     else
                     {
                         // play bad note?
-                        ++incorrect;
+                        ++D.ss.incorrect;
                     }
-                    ++current_note;
+                    ++D.ss.current_note;
                     UNPRESS(0, right);
                 }
                 else // left was pressed
                 {
-                    if (colorbucket[current_note] == 1)
+                    if (D.ss.next_blocks[D.ss.current_note] == 1)
                     {
                         // play nice note?
+                        score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        update_score();
                     }
                     else
                     {
                         // play bad note?
-                        ++incorrect;
+                        ++D.ss.incorrect;
                     }
-                    ++current_note;
+                    ++D.ss.current_note;
                     UNPRESS(0, left);
                 }
+                
+                // if we are in a round after the first one, remove all
+                // other blocks on screen besides the first one we just played.
+                if (D.ss.current_note == 1)
+                {
+                    update_round();
+                    for (int i=1; i<4; i++)
+                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
+                }
 
-                if (current_note > 3)
+                if (D.ss.current_round*4 + D.ss.current_note >= D.ss.final_note)
+                {
+                    D.ss.memorization = 1;
+                    if (D.ss.incorrect >= 1 + D.ss.final_note/16)
+                    {
+                        delayed_level = -1;
+                        // write out no good.
+                        vram[8][16] = tmap_n;
+                        vram[8][17] = tmap_o;
+                        vram[8][18] = tmap_bg;
+                        vram[8][19] = tmap_g;
+                        vram[8][20] = tmap_o;
+                        vram[8][21] = tmap_o;
+                        vram[8][22] = tmap_d;
+                        vram[8][23] = tmap_period;
+                        if (score > high_score[game])
+                        {
+                            high_score[game] = score;
+                        }
+                        pause = 180;
+                    }
+                    else
+                    {
+                        if (D.ss.incorrect)
+                        {
+                            vram[8][16] = tmap_bg;
+                            vram[8][17] = tmap_bg;
+                            vram[8][18] = tmap_bg;
+                            vram[8][19] = tmap_o;
+                            vram[8][20] = tmap_k;
+                            vram[8][21] = tmap_period;
+                            vram[8][22] = tmap_bg;
+                            vram[8][23] = tmap_bg;
+                        }
+                        else
+                        {
+                            vram[8][16] = tmap_p;
+                            vram[8][17] = tmap_e;
+                            vram[8][18] = tmap_r;
+                            vram[8][19] = tmap_f;
+                            vram[8][20] = tmap_e;
+                            vram[8][21] = tmap_c;
+                            vram[8][22] = tmap_t;
+                            vram[8][23] = tmap_exclamation;
+                        }
+                        delayed_level = 2;
+                        // we got enough right, so let's move forward:
+                        ++D.ss.final_note;
+                        // check if we need to increment the round, too:
+                        if (D.ss.current_note > 3) //D.ss.final_note / 4 > D.ss.final_round)
+                        {
+                            ++D.ss.final_round;
+                            pack_next_blocks(D.ss.final_round);
+                        }
+                        pause = 60;
+                    }
+                }
+                else if (D.ss.current_note > 3)
                 {
                     // we are finished with this round.
-                    ++current_round;
-                    current_note = 0;
-                    if (current_round > final_round)
-                    {
-                        memorization = 1;
-                        current_round = 0;
-                        ++final_round;
-                        get_next_blocks(final_round);
-                        
-                        vram[10][10] = tmap_m;
-                        vram[10][11] = tmap_e;
-                        vram[10][12] = tmap_m;
-                        vram[10][13] = tmap_o;
-                        vram[10][14] = tmap_r;
-                        vram[10][15] = tmap_i;
-                        vram[10][16] = tmap_z;
-                        vram[10][17] = tmap_e;
-                    }
-                    decode_blocks(current_round);
-                    for (uint8_t i=0; i<4; i++)
-                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
+                    ++D.ss.current_round;
+                    D.ss.current_note = 0;
+                    decode_blocks(D.ss.current_round);
                 }
             }
         }

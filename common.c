@@ -2,6 +2,11 @@
 
 void move_sprite(sij* sij, int8_t dj, int8_t di)
 { 
+    move_sprite_extra(sij, dj, di, 20, 15);
+}
+
+void move_sprite_extra(sij* sij, int8_t dj, int8_t di, uint8_t nblocks_x, uint8_t nblocks_y)
+{ 
     sij->sprite->y = 8*SCREEN_Y + 16*(-nblocks_y+2*dj)+8;
     sij->sprite->x = 8*SCREEN_X + 16*(-nblocks_x+2*di)+8;
     sij->di = di;
@@ -37,44 +42,13 @@ void set_block(int j, int i, uint8_t color)
     }
 }
 
-void delete_block(int dj, int di)
-{
-    int i = di*2 + SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
-    int j = dj*2 + SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);    
-    vram[j][i] = tmap_bg;
-    vram[j][i+1] = tmap_bg;
-    vram[j+1][i] = tmap_bg;
-    vram[j+1][i+1] = tmap_bg;
-}
-
-void create_or_cycle_block(int dj, int di, int direction)
-{
-    int i = di*2 + SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
-    int j = dj*2 + SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);     
-    int8_t index = vram[j][i];
-    if (index < 16)
-    {
-        // cycle color
-        index = ((index/2 + direction));
-        if (index < 0)
-            index = 7;
-        else if (index > 3)
-            index = 1;
-        else
-            index = 2*index+1;
-    }
-    else
-        // choose a random index
-        index = (rand()%4)*2+1;
-    //message("index = %d\n", index);
-    vram[j][i] = index++;
-    vram[j][i+1] = index;
-    index += 7;
-    vram[j+1][i] = index++;
-    vram[j+1][i+1] = index;
-}
 
 void swap_blocks(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2)
+{
+    swap_blocks_extra(dj1, di1, dj2, di2, 20, 15);
+}
+
+void swap_blocks_extra(int8_t dj1, int8_t di1, int8_t dj2, int8_t di2, uint8_t nblocks_x, uint8_t nblocks_y)
 {
     int iUL = SCREEN_X/2 - nblocks_x; // - (nblocks_x % 2);
     int jUL = SCREEN_Y/2 - nblocks_y; // - (nblocks_y % 2);
@@ -127,7 +101,7 @@ void read_presses()
     kbd_emulate_gamepad();
 
     // update my state using only new presses:
-    for (uint8_t i=0; i<2; ++i)
+    for (int i=0; i<2; ++i)
     {
         // only allow button on if it's on:
         my_gamepad_buttons[i] &= gamepad_buttons[i];
@@ -136,7 +110,7 @@ void read_presses()
     }
     
     // get previous state of buttons
-    for (uint8_t i=0; i<2; i++)
+    for (int i=0; i<2; i++)
         prev_gamepad_buttons[i] = gamepad_buttons[i];
 }
 

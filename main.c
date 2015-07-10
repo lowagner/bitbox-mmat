@@ -4,39 +4,33 @@
 #include "simone.h"
 #include <math.h> // sqrtf
 
+
 uint8_t vram[SCREEN_Y][SCREEN_X];
 //extern char build_sprite_spr[];
 //extern const unsigned char songdata[];
 //extern const unsigned char ticktockdata[];
 
 object *bg;
+sij cursor;
 
 // game state
 // ----
 frame_fn* the_game_frame;
 
-int game, level, delayed_level; // level 0 : intro, level 1 : game menu, next levels : games
-int time_remaining, pause, start_time;
-sij cursor;// player cursor position in the matrix.
-uint8_t memorization; // time to memorize or play
-uint8_t nblocks_x, nblocks_y, next_nblocks_x, next_nblocks_y;
-int memorization_time; // # of seconds for memorization
-LUINT score, best_score, next_best_score, high_score[3]; // best score for the layout
-uint8_t blocks_not_prepped; // ready for next layout or not
-uint8_t next_ncol;
-uint8_t colorbucket[4];
-uint8_t max_incorrect; // whether there can be more than one distinguishable switch possible
+game_data D;
+int game, level, delayed_level; 
+// level 0 : intro, level 1 : game menu, next levels : games
+int pause;
+LUINT score, high_score[NUMBER_GAMES];
+
 uint16_t my_gamepad_buttons[2];
 uint16_t prev_gamepad_buttons[2];
 
-uint8_t blocks[15][20];
-uint8_t next_blocks[15][20];
+sij cursor;
 
 
 // constants
 // ----
-
-#define NUMBER_GAMES 3
 
 const int16_t gamepad_dpad = 15 << 8;
 const int16_t gamepad_any = 63;

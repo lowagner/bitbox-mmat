@@ -1,6 +1,49 @@
 #include "painta.h"
 #include "common.h"
 
+void delete_block(int dj, int di)
+{
+    int i = di*2 + SCREEN_X/2 - 20; 
+    int j = dj*2 + SCREEN_Y/2 - 15; 
+    vram[j][i] = tmap_bg;
+    vram[j][i+1] = tmap_bg;
+    vram[j+1][i] = tmap_bg;
+    vram[j+1][i+1] = tmap_bg;
+}
+
+void create_or_cycle_block(int dj, int di, int direction)
+{
+    int i = di*2 + SCREEN_X/2 - 20; 
+    int j = dj*2 + SCREEN_Y/2 - 15;  
+    int8_t index = vram[j][i];
+    if (index < 16)
+    {
+        // cycle color
+        index = ((index/2 + direction));
+        if (index < 0)
+            index = 7;
+        else if (index > 3)
+            index = 1;
+        else
+            index = 2*index+1;
+        // keep track of the color we got:
+        D.pp.painting_index = index;
+    }
+    else
+        // to re-use from last time:
+        index = D.pp.painting_index;
+        // previously was random:
+        //index = (rand()%4)*2+1;
+    //message("index = %d\n", index);
+    vram[j][i] = index++;
+    vram[j][i+1] = index;
+    index += 7;
+    vram[j+1][i] = index++;
+    vram[j+1][i+1] = index;
+}
+
+
+
 void painta_enter_level(int l)
 {
     message(" level = %d\n", l);
@@ -12,9 +55,7 @@ void painta_enter_level(int l)
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+2]);
         // music player stop
         ply_init(0,0);
-        nblocks_x = 20;
-        nblocks_y = 15;
-        move_sprite(&cursor, nblocks_y/2, nblocks_x/2);
+        move_sprite(&cursor, 7, 10);
         cursor.sprite->fr=1;
     }
     else
@@ -22,7 +63,6 @@ void painta_enter_level(int l)
         // copy background into vram
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+level]);
         cursor.sprite->x = -16;
-        pause = 10;
     }
 
     delayed_level = 0;
@@ -140,7 +180,7 @@ int painta_game_frame(void)
             }
             else if (PRESSED(0, down))
             {
-                if (cursor.dj < nblocks_y-1)
+                if (cursor.dj < 14)
                 {
                     cursor.dj += 1;
                     cursor.sprite->y += 32;
@@ -151,7 +191,7 @@ int painta_game_frame(void)
             }
             else if (PRESSED(0, right))
             {
-                if (cursor.di < nblocks_x-1)
+                if (cursor.di < 19)
                 {
                     cursor.di += 1;
                     cursor.sprite->x += 32;
