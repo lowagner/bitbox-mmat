@@ -77,7 +77,7 @@ void game_init( void )
     bg = tilemap_new(tmap_tset,0,0,TMAP_HEADER(SCREEN_X,SCREEN_Y,TSET_16, TMAP_U8), vram); 
     cursor.sprite = sprite_new(build_sprite_spr,0,0,0);
 
-    ply_init(SONGLEN,songdata);
+    PLAY(hello);
     enter_game(0);
 }
 

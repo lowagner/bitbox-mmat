@@ -502,7 +502,7 @@ void memmat_enter_level(int l)
         //actual_array = (int*)malloc(xblocks*yblocks * sizeof(int));
         tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+2]);
         // music player stop
-        ply_init(0,0);
+        STOP;
         start_memorize(); // also lays out the blocks defined here.
     }
     else
@@ -678,10 +678,10 @@ int memmat_game_frame(void)
         // show time since beginning
         int t=D.mm.time_remaining - (vga_frame-D.mm.start_time)/60;
         if (t == 11)
-            ply_init(TICKSONGLEN, ticktockdata);
+            PLAY(ticktock);
         if (t <= 0 || PRESSED(0, start))
         {
-            ply_init(0, 0);
+            STOP;
             if (PRESSED(0, start))
                 UNPRESS(0, start);
             if (D.mm.memorization)

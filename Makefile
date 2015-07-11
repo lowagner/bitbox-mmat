@@ -5,9 +5,10 @@ NO_SDCARD=1
 NAME=mmat
 
 GAMES = memmat painta simone
-GAME_C_FILES = main.c song.c ticktock.c build/tmap.c common.c $(GAMES:%=%.c)
+SONGS = hello ticktock note_left note_right note_up note_down note_flub
+GAME_C_FILES = main.c build/tmap.c common.c $(GAMES:%=%.c) $(SONGS:%=songs/%.c)
 GAME_H_FILES = common.h $(GAMES:%=%.h)
-GAME_BINARY_FILES = build/sprite.spr
+GAME_BINARY_FILES = build/sprite.spr $(wildcard snd/*.raw)
 
 include $(BITBOX)/lib/bitbox.mk
 

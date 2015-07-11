@@ -87,9 +87,28 @@ void simone_game_init( void )
     //ply_init(SONGLEN,songdata);
 }
 
+void play_index(uint8_t color_index)
+{
+    switch (color_index)
+    {
+    case 0:
+        PLAY(note_right);
+        break;
+    case 1:
+        PLAY(note_left);
+        break;
+    case 2:
+        PLAY(note_up);
+        break;
+    case 3:
+        PLAY(note_down);
+        break;
+    }
+}
+
 int simone_game_frame(void) 
 {
-    ply_update();
+    ply_update_noloop();
 
     read_presses();
 
@@ -182,11 +201,13 @@ int simone_game_frame(void)
                         set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
                     decode_blocks(D.ss.current_round);
                     set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
+                    play_index(D.ss.next_blocks[D.ss.current_note]);
                     ++D.ss.current_note;
                 }
                 else
                 {
                     set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
+                    play_index(D.ss.next_blocks[D.ss.current_note]);
                     ++D.ss.current_note;
                     if (D.ss.current_note > 3)
                     {
@@ -213,13 +234,13 @@ int simone_game_frame(void)
                 {
                     if (D.ss.next_blocks[D.ss.current_note] == 2)
                     {
-                        // play nice note?
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        PLAY(note_up);
                         update_score();
                     }
                     else
                     {
-                        // play bad note?
+                        PLAY(note_flub);
                         ++D.ss.incorrect;
                     }
                     ++D.ss.current_note;
@@ -230,13 +251,13 @@ int simone_game_frame(void)
                 {
                     if (D.ss.next_blocks[D.ss.current_note] == 3)
                     {
-                        // play nice note?
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        PLAY(note_down);
                         update_score();
                     }
                     else
                     {
-                        // play bad note?
+                        PLAY(note_flub);
                         ++D.ss.incorrect;
                     }
                     ++D.ss.current_note;
@@ -246,13 +267,13 @@ int simone_game_frame(void)
                 {
                     if (D.ss.next_blocks[D.ss.current_note] == 0)
                     {
-                        // play nice note?
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        PLAY(note_right);
                         update_score();
                     }
                     else
                     {
-                        // play bad note?
+                        PLAY(note_flub);
                         ++D.ss.incorrect;
                     }
                     ++D.ss.current_note;
@@ -262,13 +283,13 @@ int simone_game_frame(void)
                 {
                     if (D.ss.next_blocks[D.ss.current_note] == 1)
                     {
-                        // play nice note?
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
+                        PLAY(note_left);
                         update_score();
                     }
                     else
                     {
-                        // play bad note?
+                        PLAY(note_flub);
                         ++D.ss.incorrect;
                     }
                     ++D.ss.current_note;

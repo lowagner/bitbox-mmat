@@ -8,8 +8,15 @@
 #include "build/tmap.h"
 #include <stdlib.h> // srand rand
 
-#include "song.h"
-#include "ticktock.h"
+#include "songs/hello.h"
+#include "songs/ticktock.h"
+#include "songs/note_up.h"
+#include "songs/note_down.h"
+#include "songs/note_left.h"
+#include "songs/note_right.h"
+#include "songs/note_flub.h"
+#define PLAY(song) ply_init(song##SONGLEN,song##_songdata)
+#define STOP ply_init(0,0)
 
 #define START_LEVEL 0
 #define REAL_LEVEL 2
@@ -41,8 +48,25 @@ typedef struct _sij
 extern uint8_t vram[SCREEN_Y][SCREEN_X];
 extern char build_sprite_spr[];
 
-extern const unsigned char songdata[];
-extern const unsigned char ticktockdata[];
+extern const unsigned char hello_songdata[];
+extern const unsigned char ticktock_songdata[];
+extern const unsigned char note_up_songdata[];
+extern const unsigned char note_down_songdata[];
+extern const unsigned char note_left_songdata[];
+extern const unsigned char note_right_songdata[];
+extern const unsigned char note_flub_songdata[];
+
+extern const int8_t note_low_raw[], 
+    note_high_raw[], 
+    note_B_raw[], 
+    note_D_raw[];
+
+extern const unsigned int note_low_raw_len, 
+    note_high_raw_len, 
+    note_B_raw_len, 
+    note_D_raw_len;
+
+// play_sample(snd_##sndname##_raw, snd_##sndname##_raw_len,speed,-1, 40,40); // no loop
 
 extern int game, level, delayed_level; 
 // level 0 : intro, level 1 : game menu, next levels : games
