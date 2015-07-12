@@ -77,6 +77,54 @@ void simone_enter_level(int l)
             // initialize things
             score = 0;
             pack_next_blocks(0); // get the first set of blocks into "D.ss.packed_blocks"
+            // add in high score
+            if (high_score[game] > 0)
+            {
+                // paste high score on level 0, too
+                int j = 16;
+                int i = SCREEN_X/2-5;
+                vram[j][i--] = tmap_bg;
+                vram[j++][i] = tmap_bg;
+                vram[j][i++] = tmap_bg;
+                vram[j][i++] = tmap_bg;
+                // add in high score text
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_h;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_i;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_g;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_h;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_bg;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_s;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_c;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_o;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_r;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_e;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i++] = tmap_colon;
+                vram[j-1][i] = tmap_bg;
+                vram[j][i] = tmap_bg;
+                
+                LUINT score_breakdown = high_score[game];
+                i = SCREEN_X/2+10;
+                j = 19;
+                while (i >= SCREEN_X/2-8)
+                {
+                    vram[j+2][i] = tmap_bg;
+                    vram[j+1][i] = tmap_bg;
+                    vram[j-1][i] = tmap_bg;
+                    vram[j][i--] = tmap_zero + (score_breakdown % 10);
+                    score_breakdown /= 10;
+                }
+            }
         }
     }
 }
@@ -305,62 +353,59 @@ int simone_game_frame(void)
                         set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
                 }
 
-                if (D.ss.current_round*4 + D.ss.current_note >= D.ss.final_note)
+                if (D.ss.incorrect >= 1 + D.ss.final_note/16)
+                {
+                    delayed_level = -1;
+                    // write out no good.
+                    vram[8][16] = tmap_n;
+                    vram[8][17] = tmap_o;
+                    vram[8][18] = tmap_bg;
+                    vram[8][19] = tmap_g;
+                    vram[8][20] = tmap_o;
+                    vram[8][21] = tmap_o;
+                    vram[8][22] = tmap_d;
+                    vram[8][23] = tmap_period;
+                    if (score > high_score[game])
+                    {
+                        high_score[game] = score;
+                    }
+                    pause = 180;
+                }
+                else if (D.ss.current_round*4 + D.ss.current_note >= D.ss.final_note)
                 {
                     D.ss.memorization = 1;
-                    if (D.ss.incorrect >= 1 + D.ss.final_note/16)
+                    if (D.ss.incorrect)
                     {
-                        delayed_level = -1;
-                        // write out no good.
-                        vram[8][16] = tmap_n;
-                        vram[8][17] = tmap_o;
+                        vram[8][16] = tmap_bg;
+                        vram[8][17] = tmap_bg;
                         vram[8][18] = tmap_bg;
-                        vram[8][19] = tmap_g;
-                        vram[8][20] = tmap_o;
-                        vram[8][21] = tmap_o;
-                        vram[8][22] = tmap_d;
-                        vram[8][23] = tmap_period;
-                        if (score > high_score[game])
-                        {
-                            high_score[game] = score;
-                        }
-                        pause = 180;
+                        vram[8][19] = tmap_o;
+                        vram[8][20] = tmap_k;
+                        vram[8][21] = tmap_period;
+                        vram[8][22] = tmap_bg;
+                        vram[8][23] = tmap_bg;
                     }
                     else
                     {
-                        if (D.ss.incorrect)
-                        {
-                            vram[8][16] = tmap_bg;
-                            vram[8][17] = tmap_bg;
-                            vram[8][18] = tmap_bg;
-                            vram[8][19] = tmap_o;
-                            vram[8][20] = tmap_k;
-                            vram[8][21] = tmap_period;
-                            vram[8][22] = tmap_bg;
-                            vram[8][23] = tmap_bg;
-                        }
-                        else
-                        {
-                            vram[8][16] = tmap_p;
-                            vram[8][17] = tmap_e;
-                            vram[8][18] = tmap_r;
-                            vram[8][19] = tmap_f;
-                            vram[8][20] = tmap_e;
-                            vram[8][21] = tmap_c;
-                            vram[8][22] = tmap_t;
-                            vram[8][23] = tmap_exclamation;
-                        }
-                        delayed_level = 2;
-                        // we got enough right, so let's move forward:
-                        ++D.ss.final_note;
-                        // check if we need to increment the round, too:
-                        if (D.ss.current_note > 3) //D.ss.final_note / 4 > D.ss.final_round)
-                        {
-                            ++D.ss.final_round;
-                            pack_next_blocks(D.ss.final_round);
-                        }
-                        pause = 60;
+                        vram[8][16] = tmap_p;
+                        vram[8][17] = tmap_e;
+                        vram[8][18] = tmap_r;
+                        vram[8][19] = tmap_f;
+                        vram[8][20] = tmap_e;
+                        vram[8][21] = tmap_c;
+                        vram[8][22] = tmap_t;
+                        vram[8][23] = tmap_exclamation;
                     }
+                    delayed_level = 2;
+                    // we got enough right, so let's move forward:
+                    ++D.ss.final_note;
+                    // check if we need to increment the round, too:
+                    if (D.ss.current_note > 3) //D.ss.final_note / 4 > D.ss.final_round)
+                    {
+                        ++D.ss.final_round;
+                        pack_next_blocks(D.ss.final_round);
+                    }
+                    pause = 60;
                 }
                 else if (D.ss.current_note > 3)
                 {
