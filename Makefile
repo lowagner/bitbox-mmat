@@ -4,7 +4,7 @@ NO_SDCARD=1
 
 NAME=mmat
 
-GAMES = memmat painta simone
+GAMES = memmat painta simone simon
 SONGS = hello ticktock note_left note_right note_up note_down note_flub
 GAME_C_FILES = main.c build/tmap.c common.c $(GAMES:%=%.c) $(SONGS:%=songs/%.c)
 GAME_H_FILES = common.h $(GAMES:%=%.h)

@@ -1,160 +1,87 @@
+#include "simon.h"
 #include "simone.h"
 #include "common.h"
 
-inline void update_round()
+void set_big_block(uint8_t color)
 {
-    int j = 25;
-    int i = 35;
-    int round = D.ss.current_round;
-    while (i > 31)
+    int y = SCREEN_Y/2-3;
+    int x = SCREEN_X/2-1;
+    switch (color)
     {
-        vram[j][i--] = tmap_zero + (round % 10);
-        round /= 10;
+    case 0: // note right
+        set_block(y, x-2, color); // upper left
+        set_block(y, x, 5); // upper mid
+        set_block(y, x+2, color); // upper right
+        y += 2;
+        set_block(y, x-2, 5); // middle left
+        set_block(y, x, color); // middle mid
+        set_block(y, x+2, 5); // middle right
+        y += 2;
+        set_block(y, x-2, color); // bottom left
+        set_block(y, x, 5); // bottom mid
+        set_block(y, x+2, color); // bottom right
+    break;
+    case 1: // note left
+        set_block(y, x-2, color); // upper left
+        set_block(y, x, 5); // upper mid
+        set_block(y, x+2, color); // upper right
+        y += 2;
+        set_block(y, x-2, 5); // middle left
+        set_block(y, x, 5); // middle mid
+        set_block(y, x+2, 5); // middle right
+        y += 2;
+        set_block(y, x-2, color); // bottom left
+        set_block(y, x, 5); // bottom mid
+        set_block(y, x+2, color); // bottom right
+    break;
+    case 2: // note up
+        set_block(y, x-2, color); // upper left
+        set_block(y, x, color); // upper mid
+        set_block(y, x+2, color); // upper right
+        y += 2;
+        set_block(y, x-2, color); // middle left
+        set_block(y, x, color); // middle mid
+        set_block(y, x+2, color); // middle right
+        y += 2;
+        set_block(y, x-2, color); // bottom left
+        set_block(y, x, 5); // bottom mid
+        set_block(y, x+2, color); // bottom right
+    break;
+    case 3: // note down
+        set_block(y, x-2, 5); // upper left
+        set_block(y, x, 5); // upper mid
+        set_block(y, x+2, 5); // upper right
+        y += 2;
+        set_block(y, x-2, 5); // middle left
+        set_block(y, x, 5); // middle mid
+        set_block(y, x+2, 5); // middle right
+        y += 2;
+        set_block(y, x-2, 5); // bottom left
+        set_block(y, x, color); // bottom mid
+        set_block(y, x+2, 5); // bottom right
+    break;
+    default:
+        set_block(y, x-2, color); // upper left
+        set_block(y, x, color); // upper mid
+        set_block(y, x+2, color); // upper right
+        y += 2;
+        set_block(y, x-2, color); // middle left
+        set_block(y, x, color); // middle mid
+        set_block(y, x+2, color); // middle right
+        y += 2;
+        set_block(y, x-2, color); // bottom left
+        set_block(y, x, color); // bottom mid
+        set_block(y, x+2, color); // bottom right
     }
 }
 
-void pack_next_blocks(int round)
-{
-    // re-seed the random number generator every once in a while,
-    // so that the player can't get spiffy:
-    if (round % 16 == 0)
-        srand(vga_frame);
-
-    for (int i=0; i<4; ++i)
-        D.ss.next_blocks[i] = rand()%4; // must be in the range 0 to 3
-    
-    message("got blocks %d, %d, %d, %d for round %d\n", D.ss.next_blocks[0], 
-        D.ss.next_blocks[1],
-        D.ss.next_blocks[2],
-        D.ss.next_blocks[3], round);
-
-    // put the result into the first four values of packed_blocks
-    D.ss.packed_blocks[round] = (
-        (D.ss.next_blocks[0]<<6) |
-        (D.ss.next_blocks[1]<<4) | 
-        (D.ss.next_blocks[2]<<2) |
-        (D.ss.next_blocks[3]<<0)
-    );
-}
-
-void decode_blocks(int round)
-{
-    uint8_t block = D.ss.packed_blocks[round];
-    D.ss.next_blocks[0] = (block>>6) & 3;
-    D.ss.next_blocks[1] = (block>>4) & 3;
-    D.ss.next_blocks[2] = (block>>2) & 3;
-    D.ss.next_blocks[3] = (block>>0) & 3;
-}
-
-
-void simone_enter_level(int l)
-{
-    message(" level = %d\n", l);
-    cursor.sprite->x = -16;
-
-    level = l;
-    delayed_level = 0;
-    if (level>=REAL_LEVEL) 
-    {
-        //actual_array = (int*)malloc(xblocks*yblocks * sizeof(int));
-        tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+2]);
-        // music player stop
-        ply_init(0,0);
-
-        D.ss.memorization = 1;
-        D.ss.final_round = 0;  // how many rounds have we gotten up to
-        D.ss.final_note = 1;   // how many notes we've gotten up to.
-        delayed_level = 2;
-        if (!pause)
-            pause = 2;
-    }
-    else
-    {
-        // copy background into vram
-        tmap_blit(bg,0,0, tmap_header, tmap_tmap[3*game+level]);
-        if (level == 0)
-        {
-            // initialize things
-            score = 0;
-            pack_next_blocks(0); // get the first set of blocks into "D.ss.packed_blocks"
-            // add in high score
-            if (high_score[game] > 0)
-            {
-                // paste high score on level 0, too
-                int j = 16;
-                int i = SCREEN_X/2-5;
-                vram[j][i--] = tmap_bg;
-                vram[j++][i] = tmap_bg;
-                vram[j][i++] = tmap_bg;
-                vram[j][i++] = tmap_bg;
-                // add in high score text
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_h;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_i;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_g;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_h;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_bg;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_s;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_c;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_o;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_r;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_e;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i++] = tmap_colon;
-                vram[j-1][i] = tmap_bg;
-                vram[j][i] = tmap_bg;
-                
-                LUINT score_breakdown = high_score[game];
-                i = SCREEN_X/2+10;
-                j = 19;
-                while (i >= SCREEN_X/2-8)
-                {
-                    vram[j+2][i] = tmap_bg;
-                    vram[j+1][i] = tmap_bg;
-                    vram[j-1][i] = tmap_bg;
-                    vram[j][i--] = tmap_zero + (score_breakdown % 10);
-                    score_breakdown /= 10;
-                }
-            }
-        }
-    }
-}
-
-void simone_game_init( void ) 
+void simon_game_init( void ) 
 {
     simone_enter_level(START_LEVEL);
     //ply_init(SONGLEN,songdata);
 }
 
-void play_index(uint8_t color_index)
-{
-    switch (color_index)
-    {
-    case 0:
-        PLAY(note_right);
-        break;
-    case 1:
-        PLAY(note_left);
-        break;
-    case 2:
-        PLAY(note_up);
-        break;
-    case 3:
-        PLAY(note_down);
-        break;
-    }
-}
-
-int simone_game_frame(void) 
+int simon_game_frame(void) 
 {
     ply_update_noloop();
 
@@ -178,7 +105,7 @@ int simone_game_frame(void)
                 // switch from memorization to play or vice versa
                 D.ss.current_round = 0;
                 D.ss.current_note = 0;
-                update_round();
+                set_big_block(5); // clear the blocks
 
                 if (D.ss.memorization)
                 {
@@ -205,8 +132,6 @@ int simone_game_frame(void)
                     vram[8][22] = tmap_bg;
                     vram[8][23] = tmap_bg;
                 }
-                for (int i=0; i<4; i++)
-                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
             }
         }
         return 0;
@@ -243,19 +168,16 @@ int simone_game_frame(void)
             {
                 if (D.ss.current_note == 0)
                 {
-                    update_round();
-                    for (int i=1; i<4; i++)
-                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
                     decode_blocks(D.ss.current_round);
                     uint8_t color = D.ss.next_blocks[D.ss.current_note];
-                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, color);
+                    set_big_block(color);
                     play_index(color);
                     ++D.ss.current_note;
                 }
                 else
                 {
                     uint8_t color = D.ss.next_blocks[D.ss.current_note];
-                    set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, color);
+                    set_big_block(color);
                     play_index(color);
                     ++D.ss.current_note;
                     if (D.ss.current_note > 3)
@@ -278,10 +200,11 @@ int simone_game_frame(void)
         {
             if (PRESSED(0, dpad))
             {
-                set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*D.ss.current_note, D.ss.next_blocks[D.ss.current_note]);
+                uint8_t color = D.ss.next_blocks[D.ss.current_note];
+                set_big_block(color);
                 if (PRESSED(0,up))
                 {
-                    if (D.ss.next_blocks[D.ss.current_note] == 2)
+                    if (color == 2)
                     {
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
                         PLAY(note_up);
@@ -298,7 +221,7 @@ int simone_game_frame(void)
                 }
                 else if (PRESSED(0, down))
                 {
-                    if (D.ss.next_blocks[D.ss.current_note] == 3)
+                    if (color == 3)
                     {
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
                         PLAY(note_down);
@@ -314,7 +237,7 @@ int simone_game_frame(void)
                 }
                 else if (PRESSED(0, right))
                 {
-                    if (D.ss.next_blocks[D.ss.current_note] == 0)
+                    if (color == 0)
                     {
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
                         PLAY(note_right);
@@ -330,7 +253,7 @@ int simone_game_frame(void)
                 }
                 else // left was pressed
                 {
-                    if (D.ss.next_blocks[D.ss.current_note] == 1)
+                    if (color == 1)
                     {
                         score += 4*D.ss.current_round + D.ss.current_note + 1;
                         PLAY(note_left);
@@ -343,15 +266,6 @@ int simone_game_frame(void)
                     }
                     ++D.ss.current_note;
                     UNPRESS(0, left);
-                }
-                
-                // if we are in a round after the first one, remove all
-                // other blocks on screen besides the first one we just played.
-                if (D.ss.current_note == 1)
-                {
-                    update_round();
-                    for (int i=1; i<4; i++)
-                        set_block(SCREEN_Y/2-1, SCREEN_X/2-4 + 2*i, 5);
                 }
 
                 if (D.ss.incorrect >= 1 + D.ss.final_note/16)

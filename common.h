@@ -20,7 +20,7 @@
 
 #define START_LEVEL 0
 #define REAL_LEVEL 2
-#define NUMBER_GAMES 3
+#define NUMBER_GAMES 4
 
 #define UNPRESS(id, key) my_gamepad_buttons[id] -= gamepad_##key
 #define PRESSED(id, key) my_gamepad_buttons[id] & gamepad_##key

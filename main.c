@@ -2,6 +2,7 @@
 #include "memmat.h"
 #include "painta.h"
 #include "simone.h"
+#include "simon.h"
 #include <math.h> // sqrtf
 
 
@@ -57,6 +58,10 @@ void enter_game(int g)
         simone_game_init();
         the_game_frame = &simone_game_frame;
         break;
+    case 3:
+        simon_game_init();
+        the_game_frame = &simon_game_frame;
+        break;
     default:
         memmat_game_init();
         the_game_frame = &memmat_game_frame;
@@ -65,7 +70,7 @@ void enter_game(int g)
 
 void game_init( void ) 
 {
-    for (uint8_t i=0; i<3; ++i)
+    for (int i=0; i<NUMBER_GAMES; ++i)
         high_score[i] = 0;
     // reset buttons to zero
     for (uint8_t i=0; i<2; ++i)
