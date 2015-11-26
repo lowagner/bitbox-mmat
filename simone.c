@@ -1,7 +1,9 @@
 #include "simone.h"
 #include "common.h"
 
-inline void update_round()
+extern inline void update_score();
+
+static inline void update_round()
 {
     int j = 25;
     int i = 35;
