@@ -12,7 +12,7 @@ GAME_BINARY_FILES = build/sprite.spr $(wildcard snd/*.raw)
 
 include $(BITBOX)/lib/bitbox.mk
 
-build/main.o : build/tmap.h
+main.c : build/tmap.h
 
 # sprite
 build/sprite.spr: grabber_on.png grabber_off.png 
