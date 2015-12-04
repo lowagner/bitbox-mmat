@@ -1,7 +1,7 @@
 # Memory Matrix
 
 A memorization game for the bitbox console, a low-power retro-modern open-hardware 
-gaming platform, based on a Cortex M4 chip (STM32F407 specfically, with a clockrate
+gaming platform, based on a Cortex M4 chip (STM32F405 specfically, with a clockrate
 of 168MHz and 192KB of RAM) and absolutely no GPU.
 
 ![Picture of intro screen](https://github.com/lowagner/lowagner.github.io/blob/master/i/mmat.gif)
@@ -26,7 +26,7 @@ http://bitboxconsole.blogspot.com/2014/08/developing-for-bitbox-under-windows.ht
 
 Then it should be a simple "make" from your `bitbox-mmat` directory, which will
 create the bitbox executable and the emulated version for your host platform,
-`mmat_emu`.
+`mmat`.
 
 
 ## Helpful links
